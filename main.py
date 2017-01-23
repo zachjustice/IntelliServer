@@ -1,16 +1,20 @@
 """`main` is the top level module for your Flask application."""
 
 # Import the Flask Framework
-from flask import Flask
+from flask import Flask, jsonify
 app = Flask(__name__)
 # Note: We don't need to call run() since our application is embedded within
 # the App Engine WSGI application server.
 
+entity = {
+    'username' : 'skim870',
+    'email_address' : 'bbjelly@gmail.com'
+}
 
-@app.route('/')
-def hello():
-    """Return a friendly HTTP greeting."""
-    return 'Wassup!'
+
+@app.route('/api/login', methods=['GET'])
+def login():
+    return jsonify(entity)
 
 
 @app.errorhandler(404)
