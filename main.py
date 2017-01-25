@@ -3,27 +3,30 @@
 # Import the Flask Framework
 from flask import Flask, jsonify
 app = Flask(__name__)
-# Note: We don't need to call run() since our application is embedded within
-# the App Engine WSGI application server.
 
 entity = {
     'username' : 'skim870',
     'email_address' : 'bbjelly@gmail.com'
 }
 
+@app.route( '/login/<int:username>', methods=['GET'] )
+def get():
+    if not request.json or not 'username' in request.json or not 'password' in request.json:
+        abort(400)
+    if( validate_login( request.username, request.password ) ):
+        return jsonify({'status': True})
+    else:
+        return jsonify({'status': False})
 
-@app.route('/api/login', methods=['GET'])
-def login():
-    return jsonify(entity)
-
+def validate_login( username, password ):
+    return True
 
 @app.errorhandler(404)
 def page_not_found(e):
     """Return a custom 404 error."""
-    return 'Sorry, Nothing at this URL.', 404
-
+    return make_response(jsonify({'error': 'Not found'}), 404)
 
 @app.errorhandler(500)
 def application_error(e):
     """Return a custom 500 error."""
-    return 'Sorry, unexpected error: {}'.format(e), 500
+    return make_response(jsonify({'error': 'Unexpected Error'}), 500)
