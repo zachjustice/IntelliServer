@@ -1,7 +1,7 @@
 """`main` is the top level module for your Flask application."""
 
 # Import the Flask Framework
-from flask import Flask, jsonify
+from flask import Flask, jsonify, abort
 app = Flask(__name__)
 
 entity = {
@@ -9,7 +9,7 @@ entity = {
     'email_address' : 'bbjelly@gmail.com'
 }
 
-@app.route( '/login/<int:username>', methods=['GET'] )
+@app.route( '/api/login', methods=['GET'] )
 def get():
     if not request.json or not 'username' in request.json or not 'password' in request.json:
         abort(400)
