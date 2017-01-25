@@ -1,25 +1,26 @@
 """`main` is the top level module for your Flask application."""
 
 # Import the Flask Framework
-from flask import Flask, jsonify, abort, make_response
+from flask import Flask, jsonify, abort, make_response, request
 app = Flask(__name__)
 
 entity = {
     'username' : 'skim870',
-    'email_address' : 'bbjelly@gmail.com'
+    'email_address' : 'bbjelly@gmail.com',
+    'password' : 'super123'
 }
 
-@app.route( '/api/login', methods=['GET'] )
+@app.route( '/api/login', methods=['POST'] )
 def get():
     if not request.json or not 'username' in request.json or not 'password' in request.json:
         abort(400)
-    if( validate_login( request.username, request.password ) ):
+    if( validate_login( request.json['username'], request.json['password'] ) ):
         return jsonify({'status': True})
     else:
         return jsonify({'status': False})
 
 def validate_login( username, password ):
-    return True
+    return username == entity['username'] and password == entity['password']
 
 @app.errorhandler(404)
 def page_not_found(e):
