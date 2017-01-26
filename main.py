@@ -16,18 +16,26 @@ entities = []
 
 @app.route( '/api/login', methods=['POST'] )
 def login():
-    if not request.json or not 'username' in request.json or not 'password' in request.json:
+    if not request.json or not 'email' in request.json or not 'password' in request.json:
         abort(400)
-    if( _validate_login( request.json['username'], request.json['password'] ) ):
+
+    entity = _find_entity( request.json['email'], request.json['password'] )
+    if( entity is not None ):
+        entity['logged_in'] = True
         return jsonify({'status': True})
     else:
         return jsonify({'status': False})
 
-def _validate_login( username, password ):
-    for entity in entities:
-        if username == entity['username'] and entity['password'] == password:
-            return True
-    return False
+def _find_entity( email, password ):
+    matching_entity = filter(
+        lambda entity: entity['email'] == email or entity['password'] == password,
+        entities
+    )
+
+    if len( matching_entity ) > 0:
+        return matching_entity[0]
+
+    return None
 
 @app.route( '/api/register', methods=['POST'] )
 def register():
@@ -42,12 +50,13 @@ def register():
 
     email = request.json['email']
     username = request.json['username']
-    conflicting_entities = filter(
-        lambda entity: entity['email'] == email or entity['username'] == username,
+
+    matching_entities = filter(
+        lambda entity: entity['email'] == email or entity['email'] == email,
         entities
     )
 
-    if len( conflicting_entities ) > 0:
+    if len( matching_entities ) > 0:
         abort(400)
 
     entities.append({
