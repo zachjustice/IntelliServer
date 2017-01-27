@@ -19,14 +19,14 @@ def login():
     if not request.json or not 'email' in request.json or not 'password' in request.json:
         abort(400)
 
-    entity = _find_entity( request.json['email'], request.json['password'] )
+    entity = _get_entity_by_email_and_password( request.json['email'], request.json['password'] )
     if( entity is not None ):
         entity['logged_in'] = True
         return jsonify({'status': True})
     else:
         return jsonify({'status': False})
 
-def _find_entity( email, password ):
+def _get_entity_by_email_and_password( email, password ):
     matching_entity = filter(
         lambda entity: entity['email'] == email and entity['password'] == password,
         entities
@@ -52,7 +52,7 @@ def register():
     username = request.json['username']
 
     matching_entities = filter(
-        lambda entity: entity['email'] == email or entity['email'] == email,
+        lambda entity: entity['username'] == username or entity['email'] == email,
         entities
     )
 
@@ -81,6 +81,10 @@ def page_not_found(e):
 @app.errorhandler(404)
 def page_not_found(e):
     return make_response(jsonify({'error': 'Not found'}), 404)
+
+@app.errorhandler(405)
+def application_error(e):
+    return make_response(jsonify({'error': 'Method not allowed'}), 405)
 
 @app.errorhandler(500)
 def application_error(e):
