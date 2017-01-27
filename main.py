@@ -28,7 +28,7 @@ def login():
 
 def _find_entity( email, password ):
     matching_entity = filter(
-        lambda entity: entity['email'] == email or entity['password'] == password,
+        lambda entity: entity['email'] == email and entity['password'] == password,
         entities
     )
 
