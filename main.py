@@ -56,7 +56,7 @@ def register():
     )
 
     if len( matching_entities ) > 0:
-        return jsonify({'status': True})
+        return jsonify({'status': False})
 
     entities.append({
         'email' : email,
