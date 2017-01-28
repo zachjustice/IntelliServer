@@ -23,6 +23,7 @@ def login():
         entity['logged_in'] = True
         return jsonify({'status': True})
     else:
+        # user doesn't exist so logging in is false
         return jsonify({'status': False})
 
 def _get_entity_by_email_and_password( email, password ):
@@ -56,6 +57,7 @@ def register():
     )
 
     if len( matching_entities ) > 0:
+        # The user already exists so notify user registration is false
         return jsonify({'status': False})
 
     entities.append({
@@ -84,8 +86,10 @@ def logout():
     )
 
     if len( matching_entity ) > 1:
+        # Data integrity error so fail
         abort(400, 'More than email was found when logging out user.')
     if len( matching_entity ) == 0:
+        # Using an email which doesn't exist so fail
         abort(400, 'This user account does not exist.')
     else:
         matching_entity = matching_entity[0]
@@ -104,9 +108,11 @@ def remove_account():
     )
 
     if len( matching_entity ) > 1:
+        # data integrity error so fail
         abort(400, 'More than one email found when removing user account.')
     if len( matching_entity ) == 0:
-        abort(400, 'This user account does not exist.')
+        # don't need to remove anything, return false
+        return jsonify({'status': False})
     else:
         del entities[entities.index(matching_entity[0])]
 
