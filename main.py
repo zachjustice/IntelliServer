@@ -2,7 +2,16 @@
 from flask import Flask, jsonify, abort, make_response, request
 app = Flask(__name__)
 
-entities = []
+entities = [
+    {
+        'email'      : 'admin@intellichef.com',
+        'username'   : 'admin',
+        'password'   : '5CC',
+        'first_name' : 'Intelli',
+        'logged_in'  : 'True',
+        'last_name'  : 'Chef'
+    }
+]
 
 @app.route( '/api/login', methods=['POST'] )
 def login():
@@ -74,8 +83,10 @@ def logout():
         entities
     )
 
-    if len( matching_entity ) != 1:
+    if len( matching_entity ) > 1:
         abort(400, 'More than email was found when logging out user.')
+    if len( matching_entity ) == 0:
+        abort(400, 'This user account does not exist.')
     else:
         matching_entity = matching_entity[0]
 
@@ -92,8 +103,10 @@ def remove_account():
         entities
     )
 
-    if len( matching_entity ) != 1:
+    if len( matching_entity ) > 1:
         abort(400, 'More than one email found when removing user account.')
+    if len( matching_entity ) == 0:
+        abort(400, 'This user account does not exist.')
     else:
         del entities[entities.index(matching_entity[0])]
 
