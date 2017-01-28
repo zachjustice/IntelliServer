@@ -1,23 +1,13 @@
-"""`main` is the top level module for your Flask application."""
-
 # Import the Flask Framework
 from flask import Flask, jsonify, abort, make_response, request
 app = Flask(__name__)
 
 entities = []
-#    entity : '',
-#    email : '',
-#    username : '',
-#    password : '',
-#    first_name : '',
-#    last_name : '',
-#    logged_in : False
-#}
 
 @app.route( '/api/login', methods=['POST'] )
 def login():
     if not request.json or not 'email' in request.json or not 'password' in request.json:
-        abort(400)
+        abort(400, 'Email and password must be provided.')
 
     entity = _get_entity_by_email_and_password( request.json['email'], request.json['password'] )
     if( entity is not None ):
@@ -46,7 +36,7 @@ def register():
     or not 'firstName' in request.json
     or not 'lastName' in request.json
     or not 'password' in request.json ):
-        abort(400)
+        abort(400, 'Registration information is missing.')
 
     email = request.json['email']
     username = request.json['username']
@@ -57,7 +47,7 @@ def register():
     )
 
     if len( matching_entities ) > 0:
-        abort(400)
+        return jsonify({'status': True})
 
     entities.append({
         'email' : email,
@@ -65,7 +55,7 @@ def register():
         'password' : request.json['password'],
         'first_name' : request.json['firstName'],
         'last_name' : request.json['lastName'],
-        'logged_in' : False
+        'logged_in' : True
     })
 
     return jsonify({'status': True})
@@ -77,41 +67,41 @@ def get_entities():
 @app.route( '/api/logout', methods=['PUT'] )
 def logout():
     if not request.json or not 'email' in request.json:
-        abort(400)
+        abort(400, 'Email must be provided.')
 
     matching_entity = filter(
         lambda entity: entity['email'] == request.json['email'],
         entities
     )
-    
+
     if len( matching_entity ) != 1:
-        abort(400)
+        abort(400, 'More than email was found when logging out user.')
     else:
         matching_entity = matching_entity[0]
-            
+
     matching_entity['logged_in'] = False
     return jsonify({'status': True})
 
-@app.route( '/api/remove_account', methods=['DELETE'] )
+@app.route( '/api/remove_account', methods=['POST'] )
 def remove_account():
     if not request.json or not 'email' in request.json:
-        abort(400)
+        abort(400, 'Email must be provided.')
 
     matching_entity = filter(
-        lambda entity: entity['email'] == json.request['email'],
+        lambda entity: entity['email'] == request.json['email'],
         entities
     )
-    
+
     if len( matching_entity ) != 1:
-        abort(400)
+        abort(400, 'More than one email found when removing user account.')
     else:
         del entities[entities.index(matching_entity[0])]
-        
+
     return jsonify({'status': True})
 
 @app.errorhandler(400)
 def page_not_found(e):
-    return make_response(jsonify({'error': 'Bad Request'}), 400)
+    return make_response(jsonify({'error': 'Bad Request: ' + e.description}), 400)
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -123,5 +113,4 @@ def application_error(e):
 
 @app.errorhandler(500)
 def application_error(e):
-    """Return a custom 500 error."""
     return make_response(jsonify({'error': 'An unexpected error occured'}), 500)
