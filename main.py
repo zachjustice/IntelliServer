@@ -80,7 +80,7 @@ def logout():
         abort(400)
 
     matching_entity = filter(
-        lambda entity: entity['username'] == username or entity['email'] == email,
+        lambda entity: entity['email'] == request.json['email'],
         entities
     )
     
@@ -89,7 +89,7 @@ def logout():
     else:
         matching_entity = matching_entity[0]
             
-    entity['logged_in'] = False
+    matching_entity['logged_in'] = False
     return jsonify({'status': True})
 
 @app.route( '/api/remove_account', methods=['DELETE'] )
@@ -98,14 +98,14 @@ def remove_account():
         abort(400)
 
     matching_entity = filter(
-        lambda entity: entity['username'] == username or entity['email'] == email,
+        lambda entity: entity['email'] == json.request['email'],
         entities
     )
     
     if len( matching_entity ) != 1:
         abort(400)
     else:
-        del matching_entity[0]
+        del entities[entities.index(matching_entity[0])]
         
     return jsonify({'status': True})
 
@@ -124,4 +124,4 @@ def application_error(e):
 @app.errorhandler(500)
 def application_error(e):
     """Return a custom 500 error."""
-    return make_response(jsonify({'error': 'Unexpected Error'}), 500)
+    return make_response(jsonify({'error': 'An unexpected error occured'}), 500)
