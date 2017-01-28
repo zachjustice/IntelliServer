@@ -74,6 +74,41 @@ def register():
 def get_entities():
     return jsonify({ 'entities': entities })
 
+@app.route( '/api/logout', methods=['PUT'] )
+def logout():
+    if not request.json or not 'email' in request.json:
+        abort(400)
+
+    matching_entity = filter(
+        lambda entity: entity['username'] == username or entity['email'] == email,
+        entities
+    )
+    
+    if len( matching_entity ) != 1:
+        abort(400)
+    else:
+        matching_entity = matching_entity[0]
+            
+    entity['logged_in'] = False
+    return jsonify({'status': True})
+
+@app.route( '/api/remove_account', methods=['DELETE'] )
+def remove_account():
+    if not request.json or not 'email' in request.json:
+        abort(400)
+
+    matching_entity = filter(
+        lambda entity: entity['username'] == username or entity['email'] == email,
+        entities
+    )
+    
+    if len( matching_entity ) != 1:
+        abort(400)
+    else:
+        del matching_entity[0]
+        
+    return jsonify({'status': True})
+
 @app.errorhandler(400)
 def page_not_found(e):
     return make_response(jsonify({'error': 'Bad Request'}), 400)
