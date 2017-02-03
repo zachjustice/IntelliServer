@@ -1,19 +1,73 @@
 # Import the Flask Framework
+import api_v1
 from flask import Flask, jsonify, abort, make_response, request
+from flask_restful import Resource, Api, reqparse
+from db import get_entity, update_entity, delete_entity, get_meal_plan
+
 app = Flask(__name__)
+api = Api(app)
 
-entities = [
-    {
-        'email'      : 'admin@intellichef.com',
-        'username'   : 'admin',
-        'password'   : '5CC',
-        'first_name' : 'Intelli',
-        'logged_in'  : 'True',
-        'last_name'  : 'Chef'
-    }
-]
+###################################################
+#############    Version 2      ###################
+###################################################
 
-@app.route( '/api/login', methods=['POST'] )
+class Entities(Resource):
+    def get(self):
+        return {'entities': entities}
+
+class Entity(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('email'     , required=True, type=str, location='json')
+        self.reqparse.add_argument('password'  , required=False,type=str, location='json')
+        self.reqparse.add_argument('first_name', required=True, type=str, location='json')
+        self.reqparse.add_argument('last_name' , required=True, type=str, location='json')
+        super(Entity, self).__init__()
+
+    def get(self, entity_pk):
+        entity = get_entity(entity_pk)
+        if(entity is None or entity == False):
+            abort(400)
+        else:
+            return entity
+
+    def put(self, entity_pk):
+        entity = get_entity(entity_pk)
+        if(entity is None or entity == False):
+            return abort(400)
+
+	args = self.reqparse.parse_args()
+	updated_entity = update_entity( entity_pk, args )
+        return updated_entity
+
+    def delete(self, entity_pk):
+        return {'deleted_entity': delete_entity(entity_pk)}
+
+class MealPlan(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('date' , required=True, type=str)
+        super(MealPlan, self).__init__()
+
+    def get(self):
+        args = self.reqparse.parse_args()
+        date = args['date']
+        meal_plan = get_meal_plan(date)
+
+        if(meal_plan is None):
+            abort(400)
+        else:
+            return meal_plan
+
+api.add_resource(Entities, '/api/v2.0/entities',                  endpoint = 'entities')
+api.add_resource(Entity,    '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entity')
+api.add_resource(MealPlan, '/api/v2.0/meal_plan',                 endpoint = 'mealplan')
+
+###################################################
+#############    Version 1      ###################
+###################################################
+
+@app.route( '/api/v1.0/login', methods=['POST'] )
 def login():
     if not request.json or not 'email' in request.json or not 'password' in request.json:
         abort(400, 'Email and password must be provided.')
@@ -37,7 +91,7 @@ def _get_entity_by_email_and_password( email, password ):
 
     return None
 
-@app.route( '/api/register', methods=['POST'] )
+@app.route( '/api/v1.0/register', methods=['POST'] )
 def register():
     if( not request.json
     or not 'email' in request.json
@@ -71,11 +125,11 @@ def register():
 
     return jsonify({'status': True})
 
-@app.route( '/api/entities', methods=['GET']  )
+@app.route( '/api/v1.0/entities', methods=['GET']  )
 def get_entities():
-    return jsonify({ 'entities': entities })
+    return jsonify({'entities': entities})
 
-@app.route( '/api/logout', methods=['PUT'] )
+@app.route( '/api/v1.0/logout', methods=['PUT'] )
 def logout():
     if not request.json or not 'email' in request.json:
         abort(400, 'Email must be provided.')
@@ -97,7 +151,7 @@ def logout():
     matching_entity['logged_in'] = False
     return jsonify({'status': True})
 
-@app.route( '/api/remove_account', methods=['POST'] )
+@app.route( '/api/v1.0/remove_account', methods=['POST'] )
 def remove_account():
     if not request.json or not 'email' in request.json:
         abort(400, 'Email must be provided.')
