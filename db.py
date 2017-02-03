@@ -7,6 +7,15 @@ entities = [
         'first_name' : 'Intelli',
         'last_name'  : 'Chef',
         'logged_in'  : 'True'
+    },
+    {
+        'entity'     : 2,
+        'username'   : 'user',
+        'email'      : 'user@intellichef.com',
+        'password'   : '5CC',
+        'first_name' : 'Zach',
+        'last_name'  : 'Bubble',
+        'logged_in'  : 'True'
     }
 ]
 
@@ -152,6 +161,14 @@ meal_plans = {
         }
     }
 }
+
+def create_entity(new_entity):
+    last_entity = max(entities, key=lambda e: e['entity'])
+    new_entity['entity'] = last_entity['entity'] + 1
+    new_entity['logged_in'] = True
+    entities.append(new_entity)
+
+    return new_entity
 
 def get_meal_plan(date):
     if( date not in meal_plans ):

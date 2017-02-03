@@ -1,8 +1,7 @@
 # Import the Flask Framework
-import api_v1
 from flask import Flask, jsonify, abort, make_response, request
 from flask_restful import Resource, Api, reqparse
-from db import get_entity, update_entity, delete_entity, get_meal_plan
+from db import entities, get_entity, update_entity, delete_entity, get_meal_plan, create_entity
 
 app = Flask(__name__)
 api = Api(app)
@@ -12,8 +11,30 @@ api = Api(app)
 ###################################################
 
 class Entities(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('email'     , required=True, type=str, location='json')
+        self.reqparse.add_argument('password'  , required=True, type=str, location='json')
+        self.reqparse.add_argument('first_name', required=True, type=str, location='json')
+        self.reqparse.add_argument('last_name' , required=True, type=str, location='json')
+        self.reqparse.add_argument('username'  , required=True, type=str, location='json')
+        super(Entities, self).__init__()
+
     def get(self):
         return {'entities': entities}
+
+    def post(self):
+	new_entity = self.reqparse.parse_args()
+        for entity_identifier in [new_entity['username'], new_entity['email']]:
+            entity = get_entity(entity_identifier) # returns false is user doesn't exist
+            if(entity is None ):
+                return abort(400)
+            if(entity != False): # user exists
+                print('user exists')
+                return False #couldn't create user since it exists
+
+	new_entity = create_entity(new_entity)
+        return new_entity
 
 class Entity(Resource):
     def __init__(self):
@@ -46,12 +67,17 @@ class Entity(Resource):
 class MealPlan(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('date' , required=True, type=str)
+        self.reqparse.add_argument('date' , required=False, type=str)
         super(MealPlan, self).__init__()
 
     def get(self):
         args = self.reqparse.parse_args()
         date = args['date']
+
+        if date is None:
+            # if no meal plan is specified return the last 10
+            return meal_plans[-10:]
+
         meal_plan = get_meal_plan(date)
 
         if(meal_plan is None):
@@ -61,7 +87,7 @@ class MealPlan(Resource):
 
 api.add_resource(Entities, '/api/v2.0/entities',                  endpoint = 'entities')
 api.add_resource(Entity,    '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entity')
-api.add_resource(MealPlan, '/api/v2.0/meal_plan',                 endpoint = 'mealplan')
+api.add_resource(MealPlan, '/api/v2.0/meal_plans',                endpoint = 'mealplan')
 
 ###################################################
 #############    Version 1      ###################
