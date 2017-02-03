@@ -28,10 +28,9 @@ class Entities(Resource):
         for entity_identifier in [new_entity['username'], new_entity['email']]:
             entity = get_entity(entity_identifier) # returns false is user doesn't exist
             if(entity is None ):
-                return abort(400)
+                return abort(500)
             if(entity != False): # user exists
-                print('user exists')
-                return False #couldn't create user since it exists
+                return abort(400, "A user already exists with this username or email.")
 
 	new_entity = create_entity(new_entity)
         return new_entity
@@ -47,22 +46,29 @@ class Entity(Resource):
 
     def get(self, entity_pk):
         entity = get_entity(entity_pk)
-        if(entity is None or entity == False):
-            abort(400)
+        if(entity is None):
+            abort(500)
+        if(entity == False):
+            abort(400, "This entity does not exist")
         else:
             return entity
 
     def put(self, entity_pk):
         entity = get_entity(entity_pk)
-        if(entity is None or entity == False):
-            return abort(400)
+        if(entity is None):
+            abort(500)
+        if(entity == False):
+            abort(400, "This entity does not exist")
 
 	args = self.reqparse.parse_args()
 	updated_entity = update_entity( entity_pk, args )
         return updated_entity
 
     def delete(self, entity_pk):
-        return {'deleted_entity': delete_entity(entity_pk)}
+        if( delete_entity(entity_pk)):
+            return {'deleted_entity': True}
+        else:
+            abort(400, 'This entity does not exist')
 
 class MealPlan(Resource):
     def __init__(self):
@@ -81,9 +87,8 @@ class MealPlan(Resource):
         meal_plan = get_meal_plan(date)
 
         if(meal_plan is None):
-            abort(400)
-        else:
-            return meal_plan
+            abort(400, "No meal plan exists for the date {}".format(date))
+        return meal_plan
 
 api.add_resource(Entities, '/api/v2.0/entities',                  endpoint = 'entities')
 api.add_resource(Entity,    '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entity')
@@ -140,8 +145,11 @@ def register():
         # The user already exists so notify user registration is false
         return jsonify({'status': False})
 
+    last_entity = max(entities, key=lambda e: e['entity'])
+
     entities.append({
         'email' : email,
+        'entity' : last_entity['entity'] + 1,
         'username' : username,
         'password' : request.json['password'],
         'first_name' : request.json['firstName'],
@@ -200,7 +208,7 @@ def remove_account():
 
 @app.errorhandler(400)
 def page_not_found(e):
-    return make_response(jsonify({'error': 'Bad Request: ' + e.description}), 400)
+    return {'error': 'Bad Request'}, 400
 
 @app.errorhandler(404)
 def page_not_found(e):
