@@ -1,4 +1,3 @@
-import json
 import psycopg2
 from psycopg2.extras import NamedTupleConnection
 from psycopg2.extras import RealDictCursor
@@ -10,6 +9,10 @@ def connect():
     except:
         print ("Unable to connect to the database.")
     return (conn, cur)
+
+def disconnect(conn, cur):
+    conn.close()
+    cur.close()
 
 # only takes a connection since db cursors should be created/destroyed
 # with each query
@@ -30,7 +33,7 @@ def execute(conn, query, data=None):
         print("ERROR WITH QUERY: '" + query + "'")
     return cur
 
-def format_data_for_jatin(conn):
+def get_total_ingredient_counts(conn):
     query = """
     SELECT ir.ingredient, i.name, count(ir.recipe)
     FROM tb_ingredient_recipe ir
@@ -38,9 +41,11 @@ def format_data_for_jatin(conn):
     ON i.ingredient = ir.ingredient
     GROUP BY i.ingredient, ir.ingredient, i.name
     """
-    ingredient_counts = fetchall(conn, query)
-    print(json.dumps(ingredient_counts, 2))
 
+    ingredient_counts = fetchall(conn, query)
+    return ingredient_counts
+
+def get_all_recipes(conn):
     query = """
     SELECT
         r.recipe,
@@ -56,12 +61,9 @@ def format_data_for_jatin(conn):
     ON i.ingredient = ir.ingredient
     GROUP BY r.recipe, r.name, r.instructions, r.description, r.preparation_time
     """
-    recipes = fetchall(conn, query)
-    print(json.dumps(recipes, 2))
 
-def disconnect(conn, cur):
-    conn.close()
-    cur.close()
+    recipes = fetchall(conn, query)
+    return recipes
 
 def insertIngredientsAndRecipes(ingredients, recipes):
     (conn, cur) = connect()
