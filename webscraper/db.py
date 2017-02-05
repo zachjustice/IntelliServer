@@ -1,4 +1,7 @@
+import json
 import psycopg2
+from psycopg2.extras import NamedTupleConnection
+from psycopg2.extras import RealDictCursor
 
 def connect():
     try:
@@ -7,6 +10,54 @@ def connect():
     except:
         print ("Unable to connect to the database.")
     return (conn, cur)
+
+# only takes a connection since db cursors should be created/destroyed
+# with each query
+def fetchall(conn, query, data=None):
+    cur = execute(conn, query, data)
+    results = cur.fetchall()
+    cur.close()
+    return results
+
+def execute(conn, query, data=None):
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        if data == None:
+            cur.execute(query)
+        else:
+            cur.execute(query, data)
+    except Exception:
+        print("ERROR WITH QUERY: '" + query + "'")
+    return cur
+
+def format_data_for_jatin(conn):
+    query = """
+    SELECT ir.ingredient, i.name, count(ir.recipe)
+    FROM tb_ingredient_recipe ir
+    JOIN tb_ingredient i
+    ON i.ingredient = ir.ingredient
+    GROUP BY i.ingredient, ir.ingredient, i.name
+    """
+    ingredient_counts = fetchall(conn, query)
+    print(json.dumps(ingredient_counts, 2))
+
+    query = """
+    SELECT
+        r.recipe,
+        r.name,
+        r.instructions,
+        r.description,
+        array_agg(i.ingredient) as "ingredients",
+        array_agg(i.name) as "ingredient_names"
+    FROM tb_recipe r
+    JOIN tb_ingredient_recipe ir
+    ON ir.recipe = r.recipe
+    JOIN tb_ingredient i 
+    ON i.ingredient = ir.ingredient
+    GROUP BY r.recipe, r.name, r.instructions, r.description, r.preparation_time
+    """
+    recipes = fetchall(conn, query)
+    print(json.dumps(recipes, 2))
 
 def disconnect(conn, cur):
     conn.close()
