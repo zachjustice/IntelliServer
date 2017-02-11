@@ -1,13 +1,20 @@
 import json
 from db import connect, disconnect, get_total_ingredient_counts, get_all_recipes
 
-conn, cur = connect()
+def getIngredientData():
+    conn, cur = connect()
 
-ingredient_counts = get_total_ingredient_counts(conn)
-recipes = get_all_recipes(conn)
+    ingredient_counts = get_total_ingredient_counts(conn)
 
-disconnect(conn, cur)
+    disconnect(conn, cur)
 
-print json.dumps(ingredient_counts, indent=2)
-print json.dumps(recipes, indent=2)
+    return json.loads((json.dumps(ingredient_counts, indent=2)))
+
+def getRecipeData():
+    conn, cur = connect()
+    recipes = get_all_recipes(conn)
+    disconnect(conn, cur)
+    return json.loads((json.dumps(recipes, indent=2)))
+
+
 

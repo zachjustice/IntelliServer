@@ -4,9 +4,18 @@ except ImportError:
     import urllib2
 from bs4 import BeautifulSoup
 import pdb
-
 def getUrls():
-    url = "http://allrecipes.com";
+    allUrls = []
+    s = set()
+    for i in range(5):
+        toAdd = getPage(i)
+        allUrls.extend(toAdd)
+        [s.add(url) for url in toAdd]
+    print (len(allUrls))
+    return s
+def getPage(page):
+    base = "https://allrecipes.com/"
+    url = base + "?page=" + str(page);
     page = urllib2.urlopen(url).read();
     soup = BeautifulSoup(page, "html.parser");
 
@@ -19,5 +28,5 @@ def getUrls():
         link = article.find("a")
         if link is not None:
             urlSuffixes.append(link.get("href"));
-    completeUrls = [url + urlSuffix for urlSuffix in urlSuffixes if urlSuffix[:7] == "/recipe"]
+    completeUrls = [base + urlSuffix for urlSuffix in urlSuffixes if urlSuffix[:7] == "/recipe"]
     return completeUrls

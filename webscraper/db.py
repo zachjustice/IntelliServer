@@ -57,7 +57,7 @@ def get_all_recipes(conn):
     FROM tb_recipe r
     JOIN tb_ingredient_recipe ir
     ON ir.recipe = r.recipe
-    JOIN tb_ingredient i 
+    JOIN tb_ingredient i
     ON i.ingredient = ir.ingredient
     GROUP BY r.recipe, r.name, r.instructions, r.description, r.preparation_time
     """

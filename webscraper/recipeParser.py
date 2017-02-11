@@ -33,8 +33,8 @@ def removeAds(string):
 
 def parseIngredient(string):
     #set-up keyword lists
-    unitWords = ['inch', 'cups', 'slices', 'packs', 'packages', 'tablespoons', 'teaspoons', 'pounds', 'quarts', 'pints', 'cc', 'cm', 'ounces', 'oz', 'liters', 'kilograms', 'grams', 'sticks', 'cloves', 'pinches']
-    descWords = ['sliced', 'chopped', 'shredded', 'minced', 'diced', 'canned', 'crushed', 'ground', 'softened', 'melted', 'separated', 'divided', 'cooked', 'uncooked', 'peeled', 'optional']
+    unitWords = ['inch', 'cups', 'slices', 'packs', 'packages', 'tablespoons', 'teaspoons', 'pounds', 'quarts', 'pints', 'cc', 'cm', 'ounces', 'oz', 'liters', 'kilograms', 'grams', 'sticks', 'cloves', 'pinches', 'halves']
+    descWords = ['sliced', 'chopped', 'shredded', 'minced', 'diced', 'canned', 'crushed', 'ground', 'softened', 'melted', 'separated', 'divided', 'cooked', 'uncooked', 'peeled', 'optional', 'boneless', 'skinless']
     adverbs = ['finely', 'well', 'carefully', 'thinly']
     stopWords = ['and', 'or', 'a', 'to', 'taste']
 
