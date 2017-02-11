@@ -8,7 +8,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from dump_recipe_and_ingredient_data import getRecipeData
 from collections import defaultdict
-from textblob import TextBlob as tb
 from scipy import sparse
 
 #highest level method - given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
@@ -17,7 +16,7 @@ def generateMealPlan(userRecipes, mealPlanSize, calibrationThreshold):
     tfidfMatrix = setupTfidfMatrix(recipes)
     matchingList = []
     for calibrationPk in userRecipes:
-        matchingList.append(findSimilarRecipes(recipes, calibrationPk, calibrationThreshold, tfidfMatrix))
+        matchingList.append(findSimilarRecipes(recipes, int(calibrationPk), calibrationThreshold, tfidfMatrix))
     return mergeLists(matchingList, userRecipes, mealPlanSize)
 
 #merges recommendations from each base calibration recipe, uses a combination of two approaches
@@ -28,8 +27,8 @@ def mergeLists(matchingLists, userRecipes, mealPlanSize):
     aggregateMatches = []
     for match in matchingLists:
         for recipe in match:
-            recipePk = round(float(recipe[1]))
-            recipeName = recipe[2]
+            recipeName = recipe[1]
+            recipePk = int(recipe[2])
             key = (recipePk, recipeName)
             if recipePk not in userRecipes:
                 matchCount[key] += 1
@@ -37,27 +36,36 @@ def mergeLists(matchingLists, userRecipes, mealPlanSize):
 
     recommendations = []
     sortedFreqMatches = np.array(sorted(matchCount.items(), key=operator.itemgetter(1)))[::-1]
-    for match in sortedFreqMatches:
-        if match[1] > 1 and len(recommendations) < mealPlanSize:
-            recommendations.append(match[0])
-        else:
-            break
+    aggregateMatches = np.array(aggregateMatches)
+    sortedConfMatches = aggregateMatches[aggregateMatches[:,0].argsort()][::-1]
+    sortedConfMatches = [(int(match[2]), match[1]) for match in sortedConfMatches]
 
-    sortedConfMatches = aggregateMatches[aggregateMatches[:][0].argsort()]
-    print (sortedConfMatches)
+    freqIndex = 0
+    confIndex = 0
+    while len(recommendations) < mealPlanSize:
+        freqMatch = sortedFreqMatches[freqIndex]
+        confMatch = sortedConfMatches[confIndex]
+        if freqMatch[1] > 1:
+            recommendations.append(freqMatch[0])
+            freqIndex += 1
+        elif confMatch not in recommendations:
+            recommendations.append(confMatch)
+            confIndex += 1
+        else:
+            confIndex += 1
 
     return recommendations
 
 #given a single recipePk, generates 'calibrationThreshold' more recipes given a tfidfMatrix
 def findSimilarRecipes(recipes, calibrationPk, calibrationThreshold, tfidfMatrix):
     recipeNames = np.array([r['name'] for r in recipes]).reshape((len(recipes), 1))
-    recipePks = np.array([r['recipe'] for r in recipes])
+    recipePks = np.array([int(float(r['recipe'])) for r in recipes])
     queryIndex = recipePks.tolist().index(calibrationPk)
     recipePks = recipePks.reshape((len(recipes), 1))
 
     results = cosine_similarity(tfidfMatrix[queryIndex][:], tfidfMatrix)
-    results = np.vstack((results, recipePks.T))
     results = np.vstack((results, recipeNames.T))
+    results = np.vstack((results, recipePks.T))
     results = np.array(results).T
 
     sortedResults = results[results[:,0].argsort()[::-1]][1::]
@@ -84,37 +92,37 @@ def vectorize(ingredients):
             wordList += w
     return wordList
 
-print (generateMealPlan([620, 599, 619], 5, 5))
+print (generateMealPlan([604, 599, 619], 5, 5))
 
 ###################################################
 #stuff to do tfidf manually - doesn't work as well as the library function, but might want to come back to it
-def createDict():
-    ingredients = getIngredientData()
-    ingredientNames = [ingred['name'] for ingred in ingredients]
-    ingredDictionary = defaultdict(int)
-    for name in ingredientNames:
-        for word in name.split():
-            ingredDictionary[word] += 1
-    return ingredDictionary
-
-
-def vectorizeManual(ingredients, dic, numRecipes):
-    wordList = ''
-    for ingred in ingredients:
-        wordList += ' '
-        for w in ingred:
-            wordList += w
-    wordList = tb(wordList)
-    tfidfDic = {}
-    for word in wordList.words:
-        tfScore = tf(word, wordList)
-        idfScore = idf(word, dic, numRecipes)
-        tfidfScore = tfScore * idfScore
-        tfidfDic[word] = tfidfScore
-    sorted_words = sorted(tfidfDic.items(), key=operator.itemgetter(1))
-
-def tf(word, blob):
-    return blob.words.count(word) / len(blob.words)
-
-def idf(word, dic, numRecipes):
-    return math.log(numRecipes / (1 + dic[word]))
+#def createDict():
+#    ingredients = getIngredientData()
+#    ingredientNames = [ingred['name'] for ingred in ingredients]
+#    ingredDictionary = defaultdict(int)
+#    for name in ingredientNames:
+#        for word in name.split():
+#            ingredDictionary[word] += 1
+#    return ingredDictionary
+#
+#
+#def vectorizeManual(ingredients, dic, numRecipes):
+#    wordList = ''
+#    for ingred in ingredients:
+#        wordList += ' '
+#        for w in ingred:
+#            wordList += w
+#    wordList = tb(wordList)
+#    tfidfDic = {}
+#    for word in wordList.words:
+#        tfScore = tf(word, wordList)
+#        idfScore = idf(word, dic, numRecipes)
+#        tfidfScore = tfScore * idfScore
+#        tfidfDic[word] = tfidfScore
+#    sorted_words = sorted(tfidfDic.items(), key=operator.itemgetter(1))
+#
+#def tf(word, blob):
+#    return blob.words.count(word) / len(blob.words)
+#
+#def idf(word, dic, numRecipes):
+#    return math.log(numRecipes / (1 + dic[word]))
