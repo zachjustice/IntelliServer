@@ -1,31 +1,12 @@
-entities = [
-    {
-        'entity'     : 1,
-        'username'   : 'admin',
-        'email'      : 'admin@intellichef.com',
-        'password'   : '5CC',
-        'first_name' : 'Intelli',
-        'last_name'  : 'Chef',
-        'logged_in'  : 'True'
-    },
-    {
-        'entity'     : 2,
-        'username'   : 'user',
-        'email'      : 'user@intellichef.com',
-        'password'   : '5CC',
-        'first_name' : 'Zach',
-        'last_name'  : 'Bubble',
-        'logged_in'  : 'True'
-    }
-]
-
 meal_plans = {
     '3-1-2017': {
         'breakfast':{
             'recipe':1,
             'name': 'Linguine',
             'instructions': 'Example Instructions',
-            'description': 'Example Description'
+            'description': 'Example Description',
+            'url': 'http://www.allrecipes.com/',
+            'rating': 3.5
         },
         'lunch':{
             'recipe':1,
@@ -161,6 +142,27 @@ meal_plans = {
         }
     }
 }
+
+entities = [
+    {
+        'entity'     : 1,
+        'username'   : 'admin',
+        'email'      : 'admin@intellichef.com',
+        'password'   : '5CC',
+        'first_name' : 'Intelli',
+        'last_name'  : 'Chef',
+        'logged_in'  : 'True'
+    },
+    {
+        'entity'     : 2,
+        'username'   : 'user',
+        'email'      : 'user@intellichef.com',
+        'password'   : '5CC',
+        'first_name' : 'Zach',
+        'last_name'  : 'Bubble',
+        'logged_in'  : 'True'
+    }
+]
 
 def create_entity(new_entity):
     last_entity = max(entities, key=lambda e: e['entity'])
