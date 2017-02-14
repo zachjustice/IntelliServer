@@ -23,153 +23,73 @@ entities = [
     }
 ]
 
-recipes = {
+recipes = [
+    {
+        'recipe':1,
+        'name': 'Linguine',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'url': 'http://www.allrecipes.com/',
+        'is_calibration_recipe': True,
+        'rating': 3.5
+    },
+    {
+        'recipe':2,
+        'name': 'Macaroni',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': False,
+        'url': 'http://www.allrecipes.com/',
+        'rating': 4
+    }
+]
+
+meal_plans = {
     '3-1-2017': {
-        'breakfast':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description',
-            'url': 'http://www.allrecipes.com/',
-            'rating': 3.5
-        },
-        'lunch':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'dinner':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        }
+        'breakfast': recipes[0],
+        'lunch': recipes[0],
+        'dinner': recipes[0]
     },
     '3-2-2017': {
-        'breakfast':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'lunch':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'dinner':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        }
+        'breakfast': recipes[0],
+        'lunch': recipes[0],
+        'dinner': recipes[0]
     },
     '3-3-2017': {
-        'breakfast':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'lunch':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'dinner':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        }
+        'breakfast': recipes[0],
+        'lunch': recipes[0],
+        'dinner': recipes[0]
     },
     '3-4-2017': {
-        'breakfast':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'lunch':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'dinner':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        }
+        'breakfast': recipes[0],
+        'lunch': recipes[0],
+        'dinner': recipes[0]
     },
     '3-5-2017': {
-        'breakfast':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'lunch':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'dinner':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        }
+        'breakfast': recipes[0],
+        'lunch': recipes[0],
+        'dinner': recipes[0]
     },
     '3-6-2017': {
-        'breakfast':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'lunch':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'dinner':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        }
+        'breakfast': recipes[0],
+        'lunch': recipes[0],
+        'dinner': recipes[0]
     },
     '3-7-2017': {
-        'breakfast':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'lunch':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        },
-        'dinner':{
-            'recipe':1,
-            'name': 'Linguine',
-            'instructions': 'Example Instructions',
-            'description': 'Example Description'
-        }
+        'breakfast': recipes[0],
+        'lunch': recipes[0],
+        'dinner': recipes[0]
     }
 }
 
 def get_recipes():
     return recipes
+
+def get_calibration_recipes():
+    return filter(lambda r: r['is_calibration_recipe'] == True, recipes)
+
+def get_most_popular_recipes():
+    return sorted(recipes, cmp=lambda y, x: int(round(x['rating'] - y['rating'])))
 
 def create_or_update_recipe_rating( recipe_rating ):
     return recipe_rating

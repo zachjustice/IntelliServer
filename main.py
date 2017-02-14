@@ -18,9 +18,9 @@ class RecipesList(Resource):
 
     def get(self):
 	recipe_params = self.reqparse.parse_args()
-        if recipe_params[sort_by] == 'popular':
+        if recipe_params['sort_by'] == 'popular':
             return get_most_popular_recipes()
-        if recipe_params[sort_by] == 'popular':
+        if recipe_params['sort_by'] == 'calibration_recipes':
             return get_calibration_recipes()
         return get_recipes()
 
@@ -107,7 +107,7 @@ class MealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('date' , required=False, type=str)
-        super(MealPlan, self).__init__()
+        super(MealPlans, self).__init__()
 
     def get(self):
         args = self.reqparse.parse_args()
@@ -115,7 +115,7 @@ class MealPlans(Resource):
 
         if date is None:
             # if no meal plan is specified return the last 10
-            return meal_plans[-10:]
+            return meal_plans
 
         meal_plan = get_meal_plan(date)
 
