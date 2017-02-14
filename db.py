@@ -1,4 +1,29 @@
-meal_plans = {
+entities = [
+    {
+        'entity'     : 1,
+        'username'   : 'admin',
+        'email'      : 'admin@intellichef.com',
+        'password'   : '5CC',
+        'first_name' : 'Intelli',
+        'last_name'  : 'Chef',
+        'logged_in'  : 'True',
+        'allergies'  : [],
+        'dietary_concerns' : []
+    },
+    {
+        'entity'     : 2,
+        'username'   : 'user',
+        'email'      : 'user@intellichef.com',
+        'password'   : '5CC',
+        'first_name' : 'Zach',
+        'last_name'  : 'Bubble',
+        'logged_in'  : 'True',
+        'allergies'  : [],
+        'dietary_concerns' : []
+    }
+]
+
+recipes = {
     '3-1-2017': {
         'breakfast':{
             'recipe':1,
@@ -143,26 +168,11 @@ meal_plans = {
     }
 }
 
-entities = [
-    {
-        'entity'     : 1,
-        'username'   : 'admin',
-        'email'      : 'admin@intellichef.com',
-        'password'   : '5CC',
-        'first_name' : 'Intelli',
-        'last_name'  : 'Chef',
-        'logged_in'  : 'True'
-    },
-    {
-        'entity'     : 2,
-        'username'   : 'user',
-        'email'      : 'user@intellichef.com',
-        'password'   : '5CC',
-        'first_name' : 'Zach',
-        'last_name'  : 'Bubble',
-        'logged_in'  : 'True'
-    }
-]
+def get_recipes():
+    return recipes
+
+def create_or_update_recipe_rating( recipe_rating ):
+    return recipe_rating
 
 def create_entity(new_entity):
     last_entity = max(entities, key=lambda e: e['entity'])
@@ -216,6 +226,12 @@ def update_entity( entity_pk, updated_entity ):
 
     if( 'last_name' in updated_entity and updated_entity['last_name'] is not None ):
         entity['last_name'] = updated_entity['last_name']
+
+    if( 'allergies' in updated_entity and updated_entity['allergies'] is not None ):
+        entity['allergies'] = updated_entity['allergies']
+
+    if( 'dietary_concerns' in updated_entity and updated_entity['dietary_concerns'] is not None ):
+        entity['dietary_concerns'] = updated_entity['dietary_concerns']
 
     return entity
 
