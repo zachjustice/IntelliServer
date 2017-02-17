@@ -106,10 +106,10 @@ def login():
     entity = _get_entity_by_email_and_password( request.json['email'], request.json['password'] )
     if( entity is not None ):
         entity['logged_in'] = True
-        return jsonify({'status': True})
+        return jsonify({'entity': entity})
     else:
-        # user doesn't exist so logging in is false
-        return jsonify({'status': False})
+        # user doesn't exist so logging in fails
+        return jsonify({'entity': None})
 
 def _get_entity_by_email_and_password( email, password ):
     matching_entity = filter(
@@ -143,11 +143,10 @@ def register():
 
     if len( matching_entities ) > 0:
         # The user already exists so notify user registration is false
-        return jsonify({'status': False})
+        return jsonify({'entity': None})
 
     last_entity = max(entities, key=lambda e: e['entity'])
-
-    entities.append({
+    entity = {
         'email' : email,
         'entity' : last_entity['entity'] + 1,
         'username' : username,
@@ -155,9 +154,11 @@ def register():
         'first_name' : request.json['firstName'],
         'last_name' : request.json['lastName'],
         'logged_in' : True
-    })
+    }
 
-    return jsonify({'status': True})
+    entities.append(entity)
+
+    return jsonify({'entity': entity})
 
 @app.route( '/api/v1.0/entities', methods=['GET']  )
 def get_entities():
