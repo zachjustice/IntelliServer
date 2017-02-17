@@ -26,21 +26,102 @@ entities = [
 recipes = [
     {
         'recipe':1,
-        'name': 'Linguine',
+        'name': 'Saucy Slow Cooker Pork Chops',
         'instructions': 'Example Instructions',
         'description': 'Example Description',
-        'url': 'http://www.allrecipes.com/',
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/1055211.jpg',
         'is_calibration_recipe': True,
-        'rating': 3.5
+        'rating': 4.5
     },
     {
         'recipe':2,
-        'name': 'Macaroni',
+        'name': 'Roasted Vegetables',
         'instructions': 'Example Instructions',
         'description': 'Example Description',
-        'is_calibration_recipe': False,
-        'url': 'http://www.allrecipes.com/',
-        'rating': 4
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/1486.jpg',
+        'rating': 4.5
+    }
+    {
+        'recipe':3,
+        'name': 'Guacamole',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/811729.jpg',
+        'is_calibration_recipe': True,
+        'rating': 5
+    },
+    {
+        'recipe':4,
+        'name': 'Addictive Sesame Chicken',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/250x250/674239.jpg',
+        'rating': 4.5
+    }
+    {
+        'recipe':5,
+        'name': 'Lentil Soup',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/789512.jpg',
+        'rating': 4.5
+    }
+    {
+        'recipe':6,
+        'name': 'Banana Pancakes',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/708583.jpg',
+        'rating': 4.5
+    }
+    {
+        'recipe':7,
+        'name': 'Oven Roasted Red Potatoes',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/722998.jpg',
+        'rating': 4.5
+    }
+    {
+        'recipe':8,
+        'name': 'Copycat Panera Broccoli Cheddar Soup',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/1087142.jpg',
+        'rating': 4.5
+    }
+    {
+        'recipe':9,
+        'name': 'Black Bean and Corn Quesadillas',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/829340.jpg',
+        'rating': 4.5
+    }
+    {
+        'recipe':10,
+        'name': 'Asian Tuna with Poached Egg',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/3511815.jpg',
+        'rating': 5
+    }
+    {
+        'recipe':11,
+        'name': 'World's Best Lasagna',
+        'instructions': 'Example Instructions',
+        'description': 'Example Description',
+        'is_calibration_recipe': True,
+        'url': 'http://images.media-allrecipes.com/userphotos/720x405/3359675.jpg',
+        'rating': 5
     }
 ]
 
