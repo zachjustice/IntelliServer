@@ -155,4 +155,44 @@ def update_entity( entity_pk, updated_entity ):
 
     return entity
 
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
 
+engine = create_engine('postgresql://postgres:tB9gh2RS@35.185.59.20/intellichef', echo=True)
+
+class Entity(Base):
+     __tablename__ = 'tb_entity'
+
+     entity = Column(Integer, primary_key=True)
+     first_name = Column(String)
+     last_name = Column(String)
+     password = Column(String)
+     email = Column(String)
+
+     def __repr__(self):
+        return "<User(entity ='%s' first_name='%s', last_name='%s', email='%s')>" % (
+	self.entity, self.first_name, self.last_name, self.email)
+
+class Recipe(Base):
+     __tablename__ = 'tb_recipe'
+
+     recipe = Column(Integer, primary_key=True)
+     name = Column(String)
+     instructions = Column(String)
+     description = Column(String)
+     preparation_time = Column(Integer)
+
+     def __repr__(self):
+        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')
+>" % ( self.recipe, self.name, self.description, self.preparation_time)
+
+class RecipeTag(Base):
+     __tablename__ = 'tb_recipe_tag'
+
+     recipe_tag = Column(Integer, primary_key=True)
+     recipe = Column(Integer)
+     tag = Column(Integer)
+
+     def __repr__(self):
+        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')
+>" % ( self.recipe, self.name, self.description, self.preparation_time)

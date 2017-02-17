@@ -55,15 +55,27 @@ class EntitiesList(Resource):
         return {'entities': entities}
 
     def post(self):
+	from sqlalchemy.orm import sessionmaker
+        Session = sessionmaker(bind=engine)
+        session = Session()
+	
 	new_entity = self.reqparse.parse_args()
-        for entity_identifier in [new_entity['username'], new_entity['email']]:
-            entity = get_entity(entity_identifier) # returns false is user doesn't exist
-            if(entity is None ):
-                return abort(500)
-            if(entity != False): # user exists
-                return abort(400, "A user already exists with this username or email.")
+        existing_user = session.query(User).filter_by(name=new_entity.username).first()
+        if(entity is None ):
+            return abort(500)
+        if(entity != False): # user exists
+            return abort(400, "A user already exists with this username or email.")
 
-	new_entity = create_entity(new_entity)
+	entity = Entity(
+	    first_name=new_entity.first_name,
+	    last_name=new_entity.last_name,
+	    username=new_entity.username,
+	    email=new_entity.email,
+	    password=new_entity.password
+	)
+
+        session.add(entity)
+
         return new_entity
 
 class Entities(Resource):
