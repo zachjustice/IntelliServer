@@ -41,7 +41,7 @@ recipes = [
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/720x405/1486.jpg',
         'rating': 4.5
-    }
+    },
     {
         'recipe':3,
         'name': 'Guacamole',
@@ -59,7 +59,7 @@ recipes = [
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/250x250/674239.jpg',
         'rating': 4.5
-    }
+    },
     {
         'recipe':5,
         'name': 'Lentil Soup',
@@ -68,7 +68,7 @@ recipes = [
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/720x405/789512.jpg',
         'rating': 4.5
-    }
+    },
     {
         'recipe':6,
         'name': 'Banana Pancakes',
@@ -77,7 +77,7 @@ recipes = [
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/720x405/708583.jpg',
         'rating': 4.5
-    }
+    },
     {
         'recipe':7,
         'name': 'Oven Roasted Red Potatoes',
@@ -86,7 +86,7 @@ recipes = [
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/720x405/722998.jpg',
         'rating': 4.5
-    }
+    },
     {
         'recipe':8,
         'name': 'Copycat Panera Broccoli Cheddar Soup',
@@ -95,7 +95,7 @@ recipes = [
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/720x405/1087142.jpg',
         'rating': 4.5
-    }
+    },
     {
         'recipe':9,
         'name': 'Black Bean and Corn Quesadillas',
@@ -104,7 +104,7 @@ recipes = [
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/720x405/829340.jpg',
         'rating': 4.5
-    }
+    },
     {
         'recipe':10,
         'name': 'Asian Tuna with Poached Egg',
@@ -113,53 +113,53 @@ recipes = [
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/720x405/3511815.jpg',
         'rating': 5
-    }
+    },
     {
         'recipe':11,
-        'name': 'World's Best Lasagna',
+        'name': 'World\'s Best Lasagna',
         'instructions': 'Example Instructions',
         'description': 'Example Description',
         'is_calibration_recipe': True,
         'url': 'http://images.media-allrecipes.com/userphotos/720x405/3359675.jpg',
         'rating': 5
-    }
+    },
 ]
 
 meal_plans = {
     '3-1-2017': {
         'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
+        'lunch': recipes[1],
+        'dinner': recipes[2]
     },
     '3-2-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
+        'breakfast': recipes[3],
+        'lunch': recipes[4],
+        'dinner': recipes[5]
     },
     '3-3-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
+        'breakfast': recipes[6],
+        'lunch': recipes[7],
+        'dinner': recipes[8]
     },
     '3-4-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
+        'breakfast': recipes[9],
+        'lunch': recipes[10],
+        'dinner': recipes[3]
     },
     '3-5-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
+        'breakfast': recipes[2],
+        'lunch': recipes[4],
+        'dinner': recipes[3]
     },
     '3-6-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
+        'breakfast': recipes[2],
+        'lunch': recipes[8],
+        'dinner': recipes[9]
     },
     '3-7-2017': {
         'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
+        'lunch': recipes[3],
+        'dinner': recipes[4]
     }
 }
 
