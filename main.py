@@ -1,24 +1,55 @@
 # Import the Flask Framework
 from flask import Flask, jsonify, abort, make_response, request
 from flask_restful import Resource, Api, reqparse
-from db import entities, get_entity, update_entity, delete_entity, get_meal_plan, create_entity
+from db import *
 
 app = Flask(__name__)
+app.config['DEBUG'] = True
 api = Api(app)
 
 ###################################################
 #############    Version 2      ###################
 ###################################################
-
-class Entities(Resource):
+class RecipesList(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('email'     , required=True, type=str, location='json')
-        self.reqparse.add_argument('password'  , required=True, type=str, location='json')
-        self.reqparse.add_argument('first_name', required=True, type=str, location='json')
-        self.reqparse.add_argument('last_name' , required=True, type=str, location='json')
-        self.reqparse.add_argument('username'  , required=True, type=str, location='json')
-        super(Entities, self).__init__()
+        self.reqparse.add_argument('sort_by', required=False, type=str)
+        super(RecipesList, self).__init__()
+
+    def get(self):
+	recipe_params = self.reqparse.parse_args()
+        if recipe_params['sort_by'] == 'popular':
+            return get_most_popular_recipes()
+        if recipe_params['sort_by'] == 'calibration_recipes':
+            return get_calibration_recipes()
+        return get_recipes()
+
+class RecipeRatings(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('recipe', required=True, type=int, location='json')
+        self.reqparse.add_argument('rating', required=True, type=int, location='json')
+        self.reqparse.add_argument('entity', required=True, type=int, location='json')
+        super(RecipeRatings, self).__init__()
+
+    def post(self):
+	recipe_rating = self.reqparse.parse_args()
+        recipe_rating = create_or_update_recipe_rating( recipe_rating )
+
+        if( recipe_rating is None ):
+            abort( 500 )
+
+        return recipe_rating
+
+class EntitiesList(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('email'     ,       required=True, type=str, location='json')
+        self.reqparse.add_argument('password'  ,       required=True, type=str, location='json')
+        self.reqparse.add_argument('first_name',       required=True, type=str, location='json')
+        self.reqparse.add_argument('last_name' ,       required=True, type=str, location='json')
+        self.reqparse.add_argument('username'  ,       required=True, type=str, location='json')
+        super(EntitiesList, self).__init__()
 
     def get(self):
         return {'entities': entities}
@@ -35,14 +66,16 @@ class Entities(Resource):
 	new_entity = create_entity(new_entity)
         return new_entity
 
-class Entity(Resource):
+class Entities(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('email'     , required=True, type=str, location='json')
-        self.reqparse.add_argument('password'  , required=False,type=str, location='json')
-        self.reqparse.add_argument('first_name', required=True, type=str, location='json')
-        self.reqparse.add_argument('last_name' , required=True, type=str, location='json')
-        super(Entity, self).__init__()
+        self.reqparse.add_argument('email', type=str, location='json')
+        self.reqparse.add_argument('password', type=str, location='json')
+        self.reqparse.add_argument('first_name', type=str, location='json')
+        self.reqparse.add_argument('last_name', type=str, location='json')
+        self.reqparse.add_argument('allergies', type=list, location='json')
+        self.reqparse.add_argument('dietary_concerns', type=list, location='json')
+        super(Entities, self).__init__()
 
     def get(self, entity_pk):
         entity = get_entity(entity_pk)
@@ -70,11 +103,11 @@ class Entity(Resource):
         else:
             abort(400, 'This entity does not exist')
 
-class MealPlan(Resource):
+class MealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('date' , required=False, type=str)
-        super(MealPlan, self).__init__()
+        super(MealPlans, self).__init__()
 
     def get(self):
         args = self.reqparse.parse_args()
@@ -82,7 +115,7 @@ class MealPlan(Resource):
 
         if date is None:
             # if no meal plan is specified return the last 10
-            return meal_plans[-10:]
+            return meal_plans
 
         meal_plan = get_meal_plan(date)
 
@@ -90,9 +123,11 @@ class MealPlan(Resource):
             abort(400, "No meal plan exists for the date {}".format(date))
         return meal_plan
 
-api.add_resource(Entities, '/api/v2.0/entities',                  endpoint = 'entities')
-api.add_resource(Entity,    '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entity')
-api.add_resource(MealPlan, '/api/v2.0/meal_plans',                endpoint = 'mealplan')
+api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
+api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
+api.add_resource(MealPlans, '/api/v2.0/meal_plans', endpoint = 'mealplans')
+api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipes')
+api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
 
 ###################################################
 #############    Version 1      ###################
