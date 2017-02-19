@@ -79,7 +79,7 @@ def insertIngredients(ingredients, cur):
         insertIngredient(ingredient, cur)
 
 def insertIngredient(ingredient, cur):
-    query = "INSERT INTO tb_ingredient (name) VALUES (%s) returning ingredient"
+    query = "INSERT INTO tb_ingredient (name) VALUES (%s) ON CONFLICT ON CONSTRAINT tb_ingredient_name_key DO UPDATE SET name = EXCLUDED.name returning ingredient;"
     cur.execute(query, [ingredient.name])
     ingredient.ingredientPk = cur.fetchone()[0]
 
@@ -88,7 +88,7 @@ def insertRecipes(recipes, cur):
         insertRecipe(r, cur)
 
 def insertRecipe(r, cur):
-    query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions) VALUES (%s, %s, %s, %s) returning recipe;"""
+    query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions) VALUES (%s, %s, %s, %s) ON CONFLICT ON CONSTRAINT tb_recipe_instructions_key DO UPDATE SET instructions = EXCLUDED.instructions returning recipe;"""
     data = (r.name, r.description, r.preparationTime, r.instructions);
     cur.execute(query, data)
     r.recipePk = cur.fetchone()[0];
@@ -110,6 +110,6 @@ def insertRecipeTags(recipes, cur):
                 insertRecipeTag(r, t, cur)
 
 def insertRecipeTag(r, t, cur):
-    query = "INSERT INTO tb_recipe_tag (recipe, tag) VALUES (%s, (SELECT tag FROM tb_tag WHERE name = %s))"
+    query = "INSERT INTO tb_recipe_tag (recipe, tag) VALUES (%s, (SELECT tag FROM tb_tag WHERE name = %s)) ON CONFLICT ON CONSTRAINT tb_recipe_tag_pkey DO NOTHING;"""
     data = (r.recipePk, t)
     cur.execute(query, data)

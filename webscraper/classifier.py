@@ -11,7 +11,7 @@ from collections import defaultdict
 from scipy import sparse
 
 #highest level method - given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
-def generateMealPlan(userRecipes, mealPlanSize, calibrationThreshold):
+def generateMealPlan(userRecipes, mealPlanSize = 10, calibrationThreshold = 5):
     recipes = getRecipeData()
     tfidfMatrix = setupTfidfMatrix(recipes)
     matchingList = []
@@ -92,7 +92,6 @@ def vectorize(ingredients):
             wordList += w
     return wordList
 
-print (generateMealPlan([604, 599, 619], 5, 5))
 
 ###################################################
 #stuff to do tfidf manually - doesn't work as well as the library function, but might want to come back to it
