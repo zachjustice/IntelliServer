@@ -1,177 +1,62 @@
-entities = [
-    {
-        'entity'     : 1,
-        'username'   : 'admin',
-        'email'      : 'admin@intellichef.com',
-        'password'   : '5CC',
-        'first_name' : 'Intelli',
-        'last_name'  : 'Chef',
-        'logged_in'  : 'True',
-        'allergies'  : [],
-        'dietary_concerns' : []
-    },
-    {
-        'entity'     : 2,
-        'username'   : 'user',
-        'email'      : 'user@intellichef.com',
-        'password'   : '5CC',
-        'first_name' : 'Zach',
-        'last_name'  : 'Bubble',
-        'logged_in'  : 'True',
-        'allergies'  : [],
-        'dietary_concerns' : []
-    }
-]
-
-recipes = [
-    {
-        'recipe':1,
-        'name': 'Linguine',
-        'instructions': 'Example Instructions',
-        'description': 'Example Description',
-        'url': 'http://www.allrecipes.com/',
-        'is_calibration_recipe': True,
-        'rating': 3.5
-    },
-    {
-        'recipe':2,
-        'name': 'Macaroni',
-        'instructions': 'Example Instructions',
-        'description': 'Example Description',
-        'is_calibration_recipe': False,
-        'url': 'http://www.allrecipes.com/',
-        'rating': 4
-    }
-]
-
-meal_plans = {
-    '3-1-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
-    },
-    '3-2-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
-    },
-    '3-3-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
-    },
-    '3-4-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
-    },
-    '3-5-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
-    },
-    '3-6-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
-    },
-    '3-7-2017': {
-        'breakfast': recipes[0],
-        'lunch': recipes[0],
-        'dinner': recipes[0]
-    }
-}
-
-def get_recipes():
-    return recipes
-
-def get_calibration_recipes():
-    return filter(lambda r: r['is_calibration_recipe'] == True, recipes)
-
-def get_most_popular_recipes():
-    return sorted(recipes, cmp=lambda y, x: int(round(x['rating'] - y['rating'])))
-
-def create_or_update_recipe_rating( recipe_rating ):
-    return recipe_rating
-
-def create_entity(new_entity):
-    last_entity = max(entities, key=lambda e: e['entity'])
-    new_entity['entity'] = last_entity['entity'] + 1
-    new_entity['logged_in'] = True
-    entities.append(new_entity)
-
-    return new_entity
-
-def get_meal_plan(date):
-    if( date not in meal_plans ):
-        return None
-    return meal_plans[date]
-
-def get_entity( entity_identifier ):
-    entity = filter(
-        lambda e: e['email'] == entity_identifier or e['username'] == entity_identifier or e['entity'] == entity_identifier,
-        entities
-    )
-
-    if len(entity) == 0:
-        return False
-    if len(entity) > 1:
-        return None
-
-    return entity[0]
-
-def delete_entity(entity_pk):
-    for i in xrange(len(entities)):
-        if(entities[i]['entity'] == entity_pk):
-            del entities[i]
-            return True
-
-    return False
-
-def update_entity( entity_pk, updated_entity ):
-    entity = filter(lambda e: e['entity'] == entity_pk, entities)
-
-    if len(entity) != 1:
-        return None
-
-    entity = entity[0]
-    if( 'email' in updated_entity and updated_entity['email'] is not None ):
-        entity['email'] = updated_entity['email']
-
-    if( 'password' in updated_entity and updated_entity['password'] is not None ):
-        entity['password'] = updated_entity['password']
-
-    if( 'first_name' in updated_entity and updated_entity['first_name'] is not None ):
-        entity['first_name'] = updated_entity['first_name']
-
-    if( 'last_name' in updated_entity and updated_entity['last_name'] is not None ):
-        entity['last_name'] = updated_entity['last_name']
-
-    if( 'allergies' in updated_entity and updated_entity['allergies'] is not None ):
-        entity['allergies'] = updated_entity['allergies']
-
-    if( 'dietary_concerns' in updated_entity and updated_entity['dietary_concerns'] is not None ):
-        entity['dietary_concerns'] = updated_entity['dietary_concerns']
-
-    return entity
-
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import sessionmaker
+from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
+from passlib.apps import custom_app_context as pwd_context
+from main import app
 
-engine = create_engine('postgresql://postgres:tB9gh2RS@35.185.59.20/intellichef', echo=True)
+import sys
+# read from password file 
+try:
+    lines = [line.rstrip('\n') for line in open('.password')]
+    user, password, host, database = lines
+except Exception, exception:
+    sys.exit("couldn't get password or username")
+
+engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=True)
+Session = sessionmaker(bind=engine)
+
+Base = declarative_base()
 
 class Entity(Base):
      __tablename__ = 'tb_entity'
 
      entity = Column(Integer, primary_key=True)
+     username = Column(String)
      first_name = Column(String)
      last_name = Column(String)
      password = Column(String)
      email = Column(String)
 
      def __repr__(self):
-        return "<User(entity ='%s' first_name='%s', last_name='%s', email='%s')>" % (
-	self.entity, self.first_name, self.last_name, self.email)
+        return "<User(entity=%s, username='%s', first_name='%s', last_name='%s', email='%s')>" % (self.entity, self.username, self.first_name, self.last_name, self.email)
+
+     def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+     def hash_password(self, password):
+         self.password = pwd_context.encrypt(password)
+
+     def verify_password(self, password):
+         return pwd_context.verify(password, self.password)
+
+     def generate_auth_token(self, expiration = 600):
+         s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+         return s.dumps({ 'entity': self.entity })
+
+     @staticmethod
+     def verify_auth_token(token):
+         session = Session()
+         s = Serializer(app.config['SECRET_KEY'])
+         try:
+             data = s.loads(token) # data stores encrypted entity pk
+         except SignatureExpired:
+             return None # valid token, but expired
+         except BadSignature:
+             return None # invalid token
+         entity = session.query(Entity).filter_by(entity=data['entity'])
+         return entity
 
 class Recipe(Base):
      __tablename__ = 'tb_recipe'
@@ -183,8 +68,10 @@ class Recipe(Base):
      preparation_time = Column(Integer)
 
      def __repr__(self):
-        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')
->" % ( self.recipe, self.name, self.description, self.preparation_time)
+        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')>" % ( self.recipe, self.name, self.description, self.preparation_time)
+
+     def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class RecipeTag(Base):
      __tablename__ = 'tb_recipe_tag'
@@ -193,6 +80,8 @@ class RecipeTag(Base):
      recipe = Column(Integer)
      tag = Column(Integer)
 
+     def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
      def __repr__(self):
-        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')
->" % ( self.recipe, self.name, self.description, self.preparation_time)
+        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')>" % ( self.recipe, self.name, self.description, self.preparation_time)

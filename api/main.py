@@ -1,11 +1,24 @@
 # Import the Flask Framework
-from flask import Flask, jsonify, abort, make_response, request
+from flask import Flask, jsonify, abort, make_response, request, g
 from flask_restful import Resource, Api, reqparse
+from flask_httpauth import HTTPBasicAuth
 from db import *
+import sys
 
 app = Flask(__name__)
+
+# read from password file
+try:
+    lines = [line.rstrip('\n') for line in open('.secret_key')]
+    secret_key = lines[0]
+except Exception, exception:
+    sys.exit("Couldn't get secret key. Does .secret_key exist?")
+
 app.config['DEBUG'] = True
+app.secret_key = secret_key
 api = Api(app)
+
+auth = HTTPBasicAuth()
 
 ###################################################
 #############    Version 2      ###################
@@ -16,6 +29,7 @@ class RecipesList(Resource):
         self.reqparse.add_argument('sort_by', required=False, type=str)
         super(RecipesList, self).__init__()
 
+    @auth.login_required
     def get(self):
 	recipe_params = self.reqparse.parse_args()
         if recipe_params['sort_by'] == 'popular':
@@ -32,6 +46,7 @@ class RecipeRatings(Resource):
         self.reqparse.add_argument('entity', required=True, type=int, location='json')
         super(RecipeRatings, self).__init__()
 
+    @auth.login_required
     def post(self):
 	recipe_rating = self.reqparse.parse_args()
         recipe_rating = create_or_update_recipe_rating( recipe_rating )
@@ -51,32 +66,44 @@ class EntitiesList(Resource):
         self.reqparse.add_argument('username'  ,       required=True, type=str, location='json')
         super(EntitiesList, self).__init__()
 
+    @auth.login_required
     def get(self):
-        return {'entities': entities}
-
-    def post(self):
-	from sqlalchemy.orm import sessionmaker
-        Session = sessionmaker(bind=engine)
         session = Session()
-	
+        entities = session.query(Entity)
+
+        return {'entities': map( lambda e: e.as_dict(), entities )}
+
+    @auth.login_required
+    def post(self):
+        session = Session()
 	new_entity = self.reqparse.parse_args()
-        existing_user = session.query(User).filter_by(name=new_entity.username).first()
-        if(entity is None ):
-            return abort(500)
-        if(entity != False): # user exists
+
+        # check username
+        existing_entity = session.query(Entity).filter_by(username=new_entity.username).first()
+        if existing_entity is not None: # user exists
             return abort(400, "A user already exists with this username or email.")
 
 	entity = Entity(
 	    first_name=new_entity.first_name,
 	    last_name=new_entity.last_name,
 	    username=new_entity.username,
-	    email=new_entity.email,
-	    password=new_entity.password
+	    email=new_entity.email
 	)
 
-        session.add(entity)
+	entity.hash_password(new_entity.password)
 
-        return new_entity
+        session.add(entity)
+        session.commit()
+
+        return entity.as_dict()
+
+class Tokens(Resource):
+    @auth.login_required
+    def get(self):
+        print("entity", g.entity)
+	token = g.entity.generate_auth_token(60000) # expires after 16.6 hours
+        print("token:", token)
+	return { 'token': token.decode('ascii') }
 
 class Entities(Resource):
     def __init__(self):
@@ -89,31 +116,53 @@ class Entities(Resource):
         self.reqparse.add_argument('dietary_concerns', type=list, location='json')
         super(Entities, self).__init__()
 
+    @auth.login_required
     def get(self, entity_pk):
-        entity = get_entity(entity_pk)
-        if(entity is None):
-            abort(500)
-        if(entity == False):
-            abort(400, "This entity does not exist")
-        else:
-            return entity
+        session = Session()
+        entity = session.query(Entity).filter_by(entity=entity_pk).first()
 
+        if(entity is None):
+            abort(400, "This entity does not exist")
+
+        return entity.as_dict()
+
+    @auth.login_required
     def put(self, entity_pk):
-        entity = get_entity(entity_pk)
+        session = session()
+        entity = session.query(entity).filter_by(entity=entity_pk).first()
+
         if(entity is None):
-            abort(500)
-        if(entity == False):
             abort(400, "This entity does not exist")
 
-	args = self.reqparse.parse_args()
-	updated_entity = update_entity( entity_pk, args )
-        return updated_entity
+        params = self.reqparse.parse_args()
 
+        if params['first_name'] is not None:
+            entity.first_name = params['first_name']
+
+        if params['last_name'] is not None:
+            entity.last_name = params['last_name']
+
+        if params['email'] is not None:
+            entity.email = params['email']
+
+        if params['password'] is not None:
+            entity.password = params['password']
+
+        session.commit()
+
+        return entity.as_dict()
+
+    @auth.login_required
     def delete(self, entity_pk):
-        if( delete_entity(entity_pk)):
-            return {'deleted_entity': True}
-        else:
-            abort(400, 'This entity does not exist')
+        session = Session()
+        entity = session.query(Entity).filter_by(entity=entity_pk).first()
+        if entity is None: # entity doesn't exist
+            return None
+
+        session.delete(entity)
+        session.commit()
+
+        return entity.as_dict()
 
 class MealPlans(Resource):
     def __init__(self):
@@ -121,6 +170,7 @@ class MealPlans(Resource):
         self.reqparse.add_argument('date' , required=False, type=str)
         super(MealPlans, self).__init__()
 
+    @auth.login_required
     def get(self):
         args = self.reqparse.parse_args()
         date = args['date']
@@ -140,6 +190,23 @@ api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'ent
 api.add_resource(MealPlans, '/api/v2.0/meal_plans', endpoint = 'mealplans')
 api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipes')
 api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
+api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
+
+@auth.verify_password
+def verify_password(username_or_token, password):
+    # first try to authenticate by token
+    entity = Entity.verify_auth_token(username_or_token)
+
+    if not entity:
+        # try to authenticate with username/password
+        session = Session()
+        entity = session.query(Entity).filter_by(username = username_or_token).first()
+
+        if not entity or not entity.verify_password(password):
+            return False
+
+    g.entity = entity
+    return True
 
 ###################################################
 #############    Version 1      ###################
@@ -268,3 +335,6 @@ def application_error(e):
 @app.errorhandler(500)
 def application_error(e):
     return make_response(jsonify({'error': 'An unexpected error occured'}), 500)
+
+if __name__ == "__main__":
+    app.run()

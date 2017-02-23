@@ -1,4 +1,6 @@
 *.pyc
+.password
+.secret_key
 # don't include third-party dependencies.
 !lib/README.md
 .DS_Store
