@@ -164,6 +164,7 @@ class Entities(Resource):
     @auth.login_required
     def put(self, entity_pk):
         session = Session()
+        # don't use g.entity incase the use is logged in as admin
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
 
         if(entity is None):
@@ -184,7 +185,22 @@ class Entities(Resource):
             entity.email = params['email']
 
         if params['password'] is not None:
+            if len(params['password']) < 6:
+                abort(400, "Password must be at least 6 characters.")
             entity.password = params['password']
+
+        if params['dietary_concerns'] is not None:
+            dietary_concerns = params['dietary_concerns']
+
+            for dietary_concern in dietary_concerns:
+                tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_pk = 1).first()
+                if tag is None:
+                    abort(400, "Dietary concern tag with primary key, " + str(tag) + ", does not exist.")
+
+                if tag.tag_pk not in map(lambda t: t.tag_pk, entity.entity_tags): 
+                    # if this entity doesn't have this dietary concern, add the dietary concern
+                    entity_tag = EntityTag(entity_pk = entity.entity_pk, tag_pk = tag.tag_pk)
+                    session.add(entity_tag)
 
         session.commit()
 
@@ -193,7 +209,7 @@ class Entities(Resource):
     @auth.login_required
     def delete(self, entity_pk):
         session = Session()
-        entity = session.query(Entity).filter_by(entity=entity_pk).first()
+        entity = session.query(Entity).filter_by(entity = entity_pk).first()
         if entity is None: # entity doesn't exist
             return None
 
@@ -216,7 +232,7 @@ class Tokens(Resource):
 class MealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('date' , required=False, type=str)
+        self.reqparse.add_argument('date' , required = False, type=str)
         super(MealPlans, self).__init__()
 
     @auth.login_required
@@ -244,7 +260,7 @@ api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
 #############    Version 1      ###################
 ###################################################
 
-@app.route( '/api/v1.0/login', methods=['POST'] )
+@app.route( '/api/v1.0/login', methods = ['POST'] )
 def login():
     if not request.json or not 'email' in request.json or not 'password' in request.json:
         abort(400, 'Email and password must be provided.')
@@ -268,7 +284,7 @@ def _get_entity_by_email_and_password( email, password ):
 
     return None
 
-@app.route( '/api/v1.0/register', methods=['POST'] )
+@app.route( '/api/v1.0/register', methods = ['POST'] )
 def register():
     if( not request.json
     or not 'email' in request.json
@@ -309,7 +325,7 @@ def register():
 def get_entities():
     return jsonify({'entities': entities})
 
-@app.route( '/api/v1.0/logout', methods=['PUT'] )
+@app.route( '/api/v1.0/logout', methods = ['PUT'] )
 def logout():
     if not request.json or not 'email' in request.json:
         abort(400, 'Email must be provided.')
@@ -331,7 +347,7 @@ def logout():
     matching_entity['logged_in'] = False
     return jsonify({'status': True})
 
-@app.route( '/api/v1.0/remove_account', methods=['POST'] )
+@app.route( '/api/v1.0/remove_account', methods = ['POST'] )
 def remove_account():
     if not request.json or not 'email' in request.json:
         abort(400, 'Email must be provided.')
