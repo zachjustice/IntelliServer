@@ -207,9 +207,9 @@ class Entities(Resource):
                 if tag is None:
                     abort(400, "Dietary concern tag with primary key, " + str(tag) + ", does not exist.")
 
-                if tag.tag_pk not in map(lambda t: t.tag_pk, entity.entity_tags): 
+                if tag.tag_pk not in map(lambda t: t.tag_fk, entity.entity_tags): 
                     # if this entity doesn't have this dietary concern, add the dietary concern
-                    entity_tag = EntityTag(entity_fk = entity.entity_pk, tag_pk = tag.tag_pk)
+                    entity_tag = EntityTag(entity_fk = entity.entity_pk, tag_fk = tag.tag_fk)
                     session.add(entity_tag)
 
         session.commit()

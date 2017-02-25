@@ -37,7 +37,7 @@ class Entity(Base):
 
     def as_dict(self):
         dietary_concern_tags = filter(lambda entity_tag: entity_tag.tag.tag_type_fk == 1, self.entity_tags)
-        dietary_concern_tag_pks = map(lambda entity_tag: entity_tag.tag.as_dict(), dietary_concern_tags) 
+        dietary_concern_tags = map(lambda entity_tag: entity_tag.tag.as_dict(), dietary_concern_tags) 
 
         return {
             'entity_pk' : self.entity_pk,
@@ -45,7 +45,7 @@ class Entity(Base):
             'first_name' : self.first_name,
             'last_name' : self.last_name,
             'email' : self.email,
-            'dietary_concerns' : dietary_concern_tag_pks
+            'dietary_concerns' : dietary_concern_tags
         }
 
     def hash_password(self, password):
@@ -78,13 +78,13 @@ class EntityTag(Base):
 
     entity_tag_pk = Column("entity_tag", Integer, primary_key=True)
     entity_fk = Column("entity", Integer, ForeignKey('tb_entity.entity'))
-    tag_pk = Column("tag", Integer, ForeignKey('tb_tag.tag'))
+    tag_fk = Column("tag", Integer, ForeignKey('tb_tag.tag'))
 
     tag = relationship("Tag", back_populates="entity_tags")
     entity = relationship("Entity", back_populates="entity_tags")
 
     def __repr__(self):
-        return "<EntityTag(entity_tag ='%s' entity='%s', tag='%s')>" % ( self.entity_tag_pk, self.entity_fk, self.tag_pk )
+        return "<EntityTag(entity_tag ='%s' entity='%s', tag='%s')>" % ( self.entity_tag_pk, self.entity_fk, self.tag_fk )
 
 class Tag(Base):
     __tablename__ = 'tb_tag'
