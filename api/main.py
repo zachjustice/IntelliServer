@@ -17,8 +17,42 @@ except Exception, exception:
 app.config['DEBUG'] = True
 app.secret_key = secret_key
 api = Api(app)
-
 auth = HTTPBasicAuth()
+
+@auth.verify_password
+def verify_password(username_or_token, password):
+    # first try to authenticate by token
+    entity = Entity.verify_auth_token(username_or_token)
+
+    if not entity:
+        # try to authenticate with username/password
+        session = Session()
+        entity = session.query(Entity).filter_by(username = username_or_token).first()
+
+        if not entity or not entity.verify_password(password):
+            return False
+
+    g.entity = entity
+    return True
+
+def requires_admin(func):
+    def decorator(*args, **kwargs):
+        # chec entity has admin access
+        session = Session()
+
+	if not g.entity.is_admin:
+            # if the entity isn't admin, give it access to resources it owns
+            if 'entity_pk' not in kwargs or g.entity.entity_pk != kwargs['entity_pk']:
+		res = make_response("Unauthorized Access")
+		if res.status_code == 200:
+		    # if user didn't set status code, use 401
+		    res.status_code = 401
+		if 'WWW-Authenticate' not in res.headers.keys():
+		    res.headers['WWW-Authenticate'] = auth.authenticate_header()
+		return res
+        return func(*args, **kwargs)
+    return decorator
+
 
 ###################################################
 #############    Version 2      ###################
@@ -43,7 +77,7 @@ class RecipeRatings(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('recipe', required=True, type=int, location='json')
         self.reqparse.add_argument('rating', required=True, type=int, location='json')
-        self.reqparse.add_argument('entity', required=True, type=int, location='json')
+        self.reqparse.add_argument('entity_pk', required=True, type=int, location='json')
         super(RecipeRatings, self).__init__()
 
     @auth.login_required
@@ -67,21 +101,25 @@ class EntitiesList(Resource):
         super(EntitiesList, self).__init__()
 
     @auth.login_required
+    @requires_admin
     def get(self):
         session = Session()
-        entities = session.query(Entity)
+        entities = session.query(Entity).all()
 
-        return {'entities': map( lambda e: e.as_dict(), entities )}
+        return map( lambda e: e.as_dict(), entities )
 
-    @auth.login_required
     def post(self):
         session = Session()
 	new_entity = self.reqparse.parse_args()
 
         # check username
-        existing_entity = session.query(Entity).filter_by(username=new_entity.username).first()
+        existing_entity = session.query(Entity).filter(Entity.email == new_entity.email).first()
         if existing_entity is not None: # user exists
-            return abort(400, "A user already exists with this username or email.")
+            return abort(400, "A user already exists with this email.")
+
+        existing_entity = session.query(Entity).filter(Entity.username == new_entity.username).first()
+        if existing_entity is not None: # user exists
+            return abort(400, "A user already exists with this username.")
 
 	entity = Entity(
 	    first_name=new_entity.first_name,
@@ -95,15 +133,11 @@ class EntitiesList(Resource):
         session.add(entity)
         session.commit()
 
-        return entity.as_dict()
+        g.entity = entity
+        entity_dict = entity.as_dict()
+        entity_dict['token'] = entity.generate_auth_token(60000)
 
-class Tokens(Resource):
-    @auth.login_required
-    def get(self):
-        print("entity", g.entity)
-	token = g.entity.generate_auth_token(60000) # expires after 16.6 hours
-        print("token:", token)
-	return { 'token': token.decode('ascii') }
+        return entity_dict
 
 class Entities(Resource):
     def __init__(self):
@@ -117,9 +151,10 @@ class Entities(Resource):
         super(Entities, self).__init__()
 
     @auth.login_required
+    @requires_admin
     def get(self, entity_pk):
         session = Session()
-        entity = session.query(Entity).filter_by(entity=entity_pk).first()
+        entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
 
         if(entity is None):
             abort(400, "This entity does not exist")
@@ -128,8 +163,8 @@ class Entities(Resource):
 
     @auth.login_required
     def put(self, entity_pk):
-        session = session()
-        entity = session.query(entity).filter_by(entity=entity_pk).first()
+        session = Session()
+        entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
 
         if(entity is None):
             abort(400, "This entity does not exist")
@@ -143,6 +178,9 @@ class Entities(Resource):
             entity.last_name = params['last_name']
 
         if params['email'] is not None:
+            existing_entity = session.query(Entity).filter_by(email=params['email']).first()
+            if existing_entity is not None and existing_entity.entity_pk != g.entity.entity_pk:
+                abort(400, "Someone already uses this email.")
             entity.email = params['email']
 
         if params['password'] is not None:
@@ -163,6 +201,17 @@ class Entities(Resource):
         session.commit()
 
         return entity.as_dict()
+
+class Tokens(Resource):
+    @auth.login_required
+    def get(self):
+	token = g.entity.generate_auth_token(60000) # expires after 16.6 hours
+	return { 'token': token.decode('ascii') }
+
+    @auth.login_required
+    def delete(self):
+        #TODO store token in db and upon logout invalidate row
+        pass
 
 class MealPlans(Resource):
     def __init__(self):
@@ -191,23 +240,6 @@ api.add_resource(MealPlans, '/api/v2.0/meal_plans', endpoint = 'mealplans')
 api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipes')
 api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
 api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
-
-@auth.verify_password
-def verify_password(username_or_token, password):
-    # first try to authenticate by token
-    entity = Entity.verify_auth_token(username_or_token)
-
-    if not entity:
-        # try to authenticate with username/password
-        session = Session()
-        entity = session.query(Entity).filter_by(username = username_or_token).first()
-
-        if not entity or not entity.verify_password(password):
-            return False
-
-    g.entity = entity
-    return True
-
 ###################################################
 #############    Version 1      ###################
 ###################################################
