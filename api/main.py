@@ -262,10 +262,10 @@ class EntityMealPlans(Resource):
             year = time.year()
             date = day + '-' + month + '-' + year
 
-        meal_plans = session.query(MealPlan).filter(Entity.entity_pk == MealPlan.entity_fk, MealPlan.eat_on == date).all()
+        meal_plans = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk,  MealPlan.eat_on == date).all()
 
         if meal_plans is None:
-            abort(404, "Meal plan not found for entity_pk " + str(entity_pk) + " and date " + str(date))
+            null
 
         meal_plan_dict = {}
 
