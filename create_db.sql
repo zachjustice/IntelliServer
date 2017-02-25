@@ -28,28 +28,47 @@ CREATE TABLE tb_tag(
     name     VARCHAR(128) UNIQUE NOT NULL
 );
 
+CREATE UNIQUE INDEX uniq_tag_type_name ON tb_tag(tag_type, name);
+
 CREATE TABLE tb_entity_tag(
     entity_tag SERIAL PRIMARY KEY,
-    entity     INTEGER REFERENCES tb_entity(entity),
-    tag        INTEGER REFERENCES tb_tag(tag)
+    entity     INTEGER NOT NULL REFERENCES tb_entity(entity),
+    tag        INTEGER NOT NULL REFERENCES tb_tag(tag)
 );
+
+CREATE UNIQUE INDEX uniq_entity_tag ON tb_entity_tag(entity, tag);
 
 CREATE TABLE tb_recipe_tag(
+    recipe_tag SERIAL PRIMARY KEY,
     recipe INTEGER REFERENCES tb_recipe( recipe ),
     tag    INTEGER REFERENCES tb_tag   ( tag    ),
-    PRIMARY KEY( recipe, tag )
 );
 
-CREATE TABLE tb_entity_recipe(
+CREATE UNIQUE INDEX uniq_recipe_tag ON tb_recipe_tag(recipe, tag);
+
+CREATE TYPE meal_type AS ENUM('breakfast', 'lunch', 'dinner');
+
+CREATE TABLE tb_meal_plan(
+    meal_plan   SERIAL PRIMARY KEY,
+    entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
+    recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
+    meal_type   meal_type NOT NULL
+);
+
+CREATE UNIQUE INDEX uniq_entity_recipe ON tb_meal_plan(entity, recipe, meal_type);
+
+CREATE TABLE tb_entity_recipe_rating(
+    meal_plan   SERIAL PRIMARY KEY,
     entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
     recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
     rating      INTEGER DEFAULT NULL,
     is_favorite BOOLEAN DEFAULT NULL,
-    PRIMARY KEY( entity, recipe),
     CONSTRAINT check_valid_rating CHECK( rating >= 0 and rating <= 5 ),
     CONSTRAINT check_rating_or_is_favorite
                 CHECK (rating IS NOT NULL or is_favorite IS NOT NULL)
 );
+
+CREATE UNIQUE INDEX uniq_entity_recipe ON tb_entity_recipe_rating(entity, recipe);
 
 CREATE TABLE tb_ingredient(
     ingredient SERIAL PRIMARY KEY,
