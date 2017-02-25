@@ -193,7 +193,15 @@ class Entities(Resource):
             dietary_concerns = params['dietary_concerns']
 
             for dietary_concern in dietary_concerns:
-                tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_pk = 1).first()
+                tag = None
+                if isinstance(dietary_concern, basestring):
+                    dietary_concern = dietary_concern.lower().strip(' ')
+                    tag = session.query(Tag).filter_by(name = dietary_concern, tag_type_pk = 1).first()
+                elif isinstance(dietary_concern, int):
+                    tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_pk = 1).first()
+                else:
+                    abort(400, "Dietary concern tag must be an integer or a string.")
+
                 if tag is None:
                     abort(400, "Dietary concern tag with primary key, " + str(tag) + ", does not exist.")
 
