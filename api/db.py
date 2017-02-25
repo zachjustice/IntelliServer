@@ -36,7 +36,7 @@ class Entity(Base):
         return "<User(entity_pk=%s, username='%s', first_name='%s', last_name='%s', is_admin='%s', email='%s')>" % (self.entity_pk, self.username, self.first_name, self.last_name, self.is_admin, self.email)
 
     def as_dict(self):
-        dietary_concern_tags = filter(lambda entity_tag: entity_tag.tag.tag_type_pk == 1, self.entity_tags)
+        dietary_concern_tags = filter(lambda entity_tag: entity_tag.tag.tag_type_fk == 1, self.entity_tags)
         dietary_concern_tag_pks = map(lambda entity_tag: entity_tag.tag.as_dict(), dietary_concern_tags) 
 
         return {
@@ -77,31 +77,31 @@ class EntityTag(Base):
     __tablename__ = 'tb_entity_tag'
 
     entity_tag_pk = Column("entity_tag", Integer, primary_key=True)
-    entity_pk = Column("entity", Integer, ForeignKey('tb_entity.entity'))
+    entity_fk = Column("entity", Integer, ForeignKey('tb_entity.entity'))
     tag_pk = Column("tag", Integer, ForeignKey('tb_tag.tag'))
 
     tag = relationship("Tag", back_populates="entity_tags")
     entity = relationship("Entity", back_populates="entity_tags")
 
     def __repr__(self):
-        return "<EntityTag(entity_tag ='%s' entity='%s', tag='%s')>" % ( self.entity_tag_pk, self.entity_pk, self.tag_pk )
+        return "<EntityTag(entity_tag ='%s' entity='%s', tag='%s')>" % ( self.entity_tag_pk, self.entity_fk, self.tag_pk )
 
 class Tag(Base):
     __tablename__ = 'tb_tag'
 
     tag_pk = Column("tag", Integer, primary_key=True)
-    tag_type_pk = Column("tag_type", Integer, ForeignKey('tb_tag_type.tag_type'))
+    tag_type_fk = Column("tag_type", Integer, ForeignKey('tb_tag_type.tag_type'))
     name = Column(String)
 
     entity_tags = relationship("EntityTag", back_populates="tag")
 
     def __repr__(self):
-        return "<Tag(tag_pk=%s, tag_type_pk=%s, name='%s')>" % (self.tag_pk, self.tag_type_pk, self.name)
+        return "<Tag(tag_pk=%s, tag_type_fk=%s, name='%s')>" % (self.tag_pk, self.tag_type_fk, self.name)
 
     def as_dict(self):
         return {
             'tag_pk' : self.tag_pk,
-            'tag_type_pk' : self.tag_type_pk,
+            'tag_type_fk' : self.tag_type_fk,
             'name' : self.name
         }
 

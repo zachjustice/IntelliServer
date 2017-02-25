@@ -35,7 +35,9 @@ def verify_password(username_or_token, password):
     g.entity = entity
     return True
 
-def requires_admin(func):
+# ensure that entities can only access their own resources (one entity can't modify another's mealplan)
+# allow admins access to all resources
+def validate_access(func):
     def decorator(*args, **kwargs):
         # chec entity has admin access
         session = Session()
@@ -101,7 +103,7 @@ class EntitiesList(Resource):
         super(EntitiesList, self).__init__()
 
     @auth.login_required
-    @requires_admin
+    @validate_access
     def get(self):
         session = Session()
         entities = session.query(Entity).all()
@@ -151,7 +153,7 @@ class Entities(Resource):
         super(Entities, self).__init__()
 
     @auth.login_required
-    @requires_admin
+    @validate_access
     def get(self, entity_pk):
         session = Session()
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
@@ -198,7 +200,7 @@ class Entities(Resource):
                     dietary_concern = dietary_concern.lower().strip(' ')
                     tag = session.query(Tag).filter_by(name = dietary_concern, tag_type_pk = 1).first()
                 elif isinstance(dietary_concern, int):
-                    tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_pk = 1).first()
+                    tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_fk = 1).first()
                 else:
                     abort(400, "Dietary concern tag must be an integer or a string.")
 
@@ -207,7 +209,7 @@ class Entities(Resource):
 
                 if tag.tag_pk not in map(lambda t: t.tag_pk, entity.entity_tags): 
                     # if this entity doesn't have this dietary concern, add the dietary concern
-                    entity_tag = EntityTag(entity_pk = entity.entity_pk, tag_pk = tag.tag_pk)
+                    entity_tag = EntityTag(entity_fk = entity.entity_pk, tag_pk = tag.tag_pk)
                     session.add(entity_tag)
 
         session.commit()
@@ -215,7 +217,7 @@ class Entities(Resource):
         return entity.as_dict()
 
     @auth.login_required
-    @requires_admin
+    @validate_access
     def delete(self, entity_pk):
         session = Session()
         entity = session.query(Entity).filter_by(entity_pk = entity_pk).first()
@@ -249,6 +251,7 @@ class EntityMealPlans(Resource):
         super(EntityMealPlans, self).__init__()
 
     @auth.login_required
+    @validate_access
     def get(self, entity_pk):
         params = self.reqparse.parse_args()
         date = params['date']
