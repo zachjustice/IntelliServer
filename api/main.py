@@ -215,11 +215,16 @@ class Entities(Resource):
         return entity.as_dict()
 
     @auth.login_required
+    @requires_admin
     def delete(self, entity_pk):
         session = Session()
-        entity = session.query(Entity).filter_by(entity = entity_pk).first()
+        entity = session.query(Entity).filter_by(entity_pk = entity_pk).first()
         if entity is None: # entity doesn't exist
             return None
+
+        for entity_tag in entity.entity_tags:
+            entity_tag = session.query(EntityTag).filter_by(entity_tag_pk = entity_tag.entity_tag_pk)
+            session.delete(entity_tag)
 
         session.delete(entity)
         session.commit()
@@ -237,147 +242,49 @@ class Tokens(Resource):
         #TODO store token in db and upon logout invalidate row
         pass
 
-class MealPlans(Resource):
+class EntityMealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('date' , required = False, type=str)
-        super(MealPlans, self).__init__()
+        self.reqparse.add_argument('date', required = True, type=str)
+        super(EntityMealPlans, self).__init__()
 
     @auth.login_required
-    def get(self):
-        args = self.reqparse.parse_args()
-        date = args['date']
+    def get(self, entity_pk):
+        params = self.reqparse.parse_args()
+        date = params['date']
+
+        session = Session()
 
         if date is None:
-            # if no meal plan is specified return the last 10
-            return meal_plans
+            # default to current date
+            day = time.day()
+            month = time.month()
+            year = time.year()
+            date = day + '-' + month + '-' + year
 
-        meal_plan = get_meal_plan(date)
+        meal_plans = session.query(MealPlan).filter(Entity.entity_pk == MealPlan.entity_fk, MealPlan.eat_on == date).all()
 
-        if(meal_plan is None):
-            abort(400, "No meal plan exists for the date {}".format(date))
-        return meal_plan
+        if meal_plans is None:
+            abort(404, "Meal plan not found for entity_pk " + str(entity_pk) + " and date " + str(date))
+
+        meal_plan_dict = {}
+
+        for meal_plan in meal_plans:
+            if meal_plan.meal_type not in meal_plan_dict:
+                meal_plan_dict[meal_plan.meal_type] = []
+            meal_plan_dict[meal_plan.meal_type] = meal_plan.as_dict()
+
+        return meal_plan_dict
 
 api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
 api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
-api.add_resource(MealPlans, '/api/v2.0/meal_plans', endpoint = 'mealplans')
+api.add_resource(EntityMealPlans, '/api/v2.0/entities/<int:entity_pk>/meal_plans', endpoint = 'entitymealplans')
 api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipes')
 api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
 api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
-###################################################
-#############    Version 1      ###################
-###################################################
-
-@app.route( '/api/v1.0/login', methods = ['POST'] )
-def login():
-    if not request.json or not 'email' in request.json or not 'password' in request.json:
-        abort(400, 'Email and password must be provided.')
-
-    entity = _get_entity_by_email_and_password( request.json['email'], request.json['password'] )
-    if( entity is not None ):
-        entity['logged_in'] = True
-        return jsonify({'status': True})
-    else:
-        # user doesn't exist so logging in is false
-        return jsonify({'status': False})
-
-def _get_entity_by_email_and_password( email, password ):
-    matching_entity = filter(
-        lambda entity: entity['email'] == email and entity['password'] == password,
-        entities
-    )
-
-    if len( matching_entity ) > 0:
-        return matching_entity[0]
-
-    return None
-
-@app.route( '/api/v1.0/register', methods = ['POST'] )
-def register():
-    if( not request.json
-    or not 'email' in request.json
-    or not 'username' in request.json
-    or not 'password' in request.json
-    or not 'firstName' in request.json
-    or not 'lastName' in request.json
-    or not 'password' in request.json ):
-        abort(400, 'Registration information is missing.')
-
-    email = request.json['email']
-    username = request.json['username']
-
-    matching_entities = filter(
-        lambda entity: entity['username'] == username or entity['email'] == email,
-        entities
-    )
-
-    if len( matching_entities ) > 0:
-        # The user already exists so notify user registration is false
-        return jsonify({'status': False})
-
-    last_entity = max(entities, key=lambda e: e['entity'])
-
-    entities.append({
-        'email' : email,
-        'entity' : last_entity['entity'] + 1,
-        'username' : username,
-        'password' : request.json['password'],
-        'first_name' : request.json['firstName'],
-        'last_name' : request.json['lastName'],
-        'logged_in' : True
-    })
-
-    return jsonify({'status': True})
-
-@app.route( '/api/v1.0/entities', methods=['GET']  )
-def get_entities():
-    return jsonify({'entities': entities})
-
-@app.route( '/api/v1.0/logout', methods = ['PUT'] )
-def logout():
-    if not request.json or not 'email' in request.json:
-        abort(400, 'Email must be provided.')
-
-    matching_entity = filter(
-        lambda entity: entity['email'] == request.json['email'],
-        entities
-    )
-
-    if len( matching_entity ) > 1:
-        # Data integrity error so fail
-        abort(400, 'More than email was found when logging out user.')
-    if len( matching_entity ) == 0:
-        # Using an email which doesn't exist so fail
-        abort(400, 'This user account does not exist.')
-    else:
-        matching_entity = matching_entity[0]
-
-    matching_entity['logged_in'] = False
-    return jsonify({'status': True})
-
-@app.route( '/api/v1.0/remove_account', methods = ['POST'] )
-def remove_account():
-    if not request.json or not 'email' in request.json:
-        abort(400, 'Email must be provided.')
-
-    matching_entity = filter(
-        lambda entity: entity['email'] == request.json['email'],
-        entities
-    )
-
-    if len( matching_entity ) > 1:
-        # data integrity error so fail
-        abort(400, 'More than one email found when removing user account.')
-    if len( matching_entity ) == 0:
-        # don't need to remove anything, return false
-        return jsonify({'status': False})
-    else:
-        del entities[entities.index(matching_entity[0])]
-
-    return jsonify({'status': True})
 
 @app.errorhandler(400)
-def page_not_found(e):
+def bad_request(e):
     return {'error': 'Bad Request'}, 400
 
 @app.errorhandler(404)
@@ -385,11 +292,11 @@ def page_not_found(e):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
 @app.errorhandler(405)
-def application_error(e):
+def method_not_allowed(e):
     return make_response(jsonify({'error': 'Method not allowed'}), 405)
 
 @app.errorhandler(500)
-def application_error(e):
+def internal_error(e):
     return make_response(jsonify({'error': 'An unexpected error occured'}), 500)
 
 if __name__ == "__main__":

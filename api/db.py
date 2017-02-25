@@ -30,13 +30,14 @@ class Entity(Base):
     email = Column(String)
 
     entity_tags = relationship("EntityTag", back_populates="entity")
+    meal_plans = relationship("MealPlan", back_populates="entity")
 
     def __repr__(self):
         return "<User(entity_pk=%s, username='%s', first_name='%s', last_name='%s', is_admin='%s', email='%s')>" % (self.entity_pk, self.username, self.first_name, self.last_name, self.is_admin, self.email)
 
     def as_dict(self):
         dietary_concern_tags = filter(lambda entity_tag: entity_tag.tag.tag_type_pk == 1, self.entity_tags)
-        dietary_concern_tag_pks = map(lambda tag: tag.tag_pk, dietary_concern_tags) 
+        dietary_concern_tag_pks = map(lambda entity_tag: entity_tag.tag.as_dict(), dietary_concern_tags) 
 
         return {
             'entity_pk' : self.entity_pk,
@@ -97,6 +98,13 @@ class Tag(Base):
     def __repr__(self):
         return "<Tag(tag_pk=%s, tag_type_pk=%s, name='%s')>" % (self.tag_pk, self.tag_type_pk, self.name)
 
+    def as_dict(self):
+        return {
+            'tag_pk' : self.tag_pk,
+            'tag_type_pk' : self.tag_type_pk,
+            'name' : self.name
+        }
+
 class Recipe(Base):
      __tablename__ = 'tb_recipe'
 
@@ -105,6 +113,8 @@ class Recipe(Base):
      instructions = Column(String)
      description = Column(String)
      preparation_time = Column(Integer)
+
+     meal_plans = relationship("MealPlan", back_populates="recipe")
 
      def __repr__(self):
         return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')>" % ( self.recipe, self.name, self.description, self.preparation_time)
@@ -124,3 +134,23 @@ class RecipeTag(Base):
 
      def __repr__(self):
         return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')>" % ( self.recipe, self.name, self.description, self.preparation_time)
+
+class MealPlan(Base):
+    __tablename__ = 'tb_meal_plan'
+
+    meal_plan_pk = Column('meal_plan', Integer, primary_key=True)
+    entity_fk = Column('entity', Integer, ForeignKey('tb_entity.entity'), nullable=False)
+    recipe_fk = Column('recipe', Integer, ForeignKey('tb_recipe.recipe'), nullable=False)
+    meal_type = Column(String, nullable=False)
+    eat_on = Column(String, nullable=False)
+
+    recipe = relationship("Recipe", back_populates="meal_plans")
+    entity = relationship("Entity", back_populates="meal_plans")
+
+    def as_dict(self):
+        return {
+            'meal_plan_pk' : self.meal_plan_pk,
+            'entity_fk' : self.entity_fk,
+            'recipe_fk' : self.recipe_fk,
+            'meal_type' : self.meal_type
+        }
