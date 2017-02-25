@@ -1,0 +1,77 @@
+CREATE DATABASE intellichef;
+
+CREATE TABLE tb_entity(
+    entity     SERIAL PRIMARY KEY,
+    email      VARCHAR(128) UNIQUE NOT NULL,
+    username   VARCHAR(128) UNIQUE NOT NULL,
+    password   TEXT NOT NULL,
+    first_name VARCHAR(128) DEFAULT NULL,
+    last_name  VARCHAR(128) DEFAULT NULL
+);
+
+CREATE TABLE tb_recipe(
+    recipe           SERIAL PRIMARY KEY,
+    name             VARCHAR(128) NOT NULL,
+    instructions     TEXT UNIQUE NOT NULL,
+    description      TEXT NOT NULL,
+    preparation_time INT NOT NULL
+);
+
+CREATE TABLE tb_tag_type(
+    tag_type SERIAL PRIMARY KEY,
+    name     VARCHAR(128) UNIQUE NOT NULL
+);
+
+CREATE TABLE tb_tag(
+    tag      SERIAL PRIMARY KEY,
+    tag_type INTEGER NOT NULL REFERENCES tb_tag_type( tag_type ),
+    name     VARCHAR(128) UNIQUE NOT NULL
+);
+
+CREATE TABLE tb_entity_tag(
+    entity_tag SERIAL PRIMARY KEY,
+    entity     INTEGER REFERENCES tb_entity(entity),
+    tag        INTEGER REFERENCES tb_tag(tag)
+);
+
+CREATE TABLE tb_recipe_tag(
+    recipe INTEGER REFERENCES tb_recipe( recipe ),
+    tag    INTEGER REFERENCES tb_tag   ( tag    ),
+    PRIMARY KEY( recipe, tag )
+);
+
+CREATE TABLE tb_entity_recipe(
+    entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
+    recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
+    rating      INTEGER DEFAULT NULL,
+    is_favorite BOOLEAN DEFAULT NULL,
+    PRIMARY KEY( entity, recipe),
+    CONSTRAINT check_valid_rating CHECK( rating >= 0 and rating <= 5 ),
+    CONSTRAINT check_rating_or_is_favorite
+                CHECK (rating IS NOT NULL or is_favorite IS NOT NULL)
+);
+
+CREATE TABLE tb_ingredient(
+    ingredient SERIAL PRIMARY KEY,
+    name       VARCHAR(128) UNIQUE NOT NULL
+);
+
+CREATE TABLE tb_ingredient_recipe(
+    ingredient        INTEGER REFERENCES tb_ingredient( ingredient ),
+    recipe            INTEGER REFERENCES tb_recipe( recipe ),
+    quantity          VARCHAR(20) DEFAULT NULL,
+    unit              VARCHAR(20) DEFAULT NULL,
+    description       TEXT DEFAULT NULL,
+    preparation_notes TEXT DEFAULT NULL
+);
+
+INSERT INTO tb_tag_type(name) VALUES ('SYSTEM');
+INSERT INTO tb_tag(tag_type, name) VALUES(1, 'calibration');
+
+INSERT INTO tb_tag_type(name) VALUES ('Dietary Concerns');
+
+INSERT INTO tb_tag(name, tag_type) VALUES ('vegetarian', 1);
+INSERT INTO tb_tag(name, tag_type) VALUES ('gluten-free', 1);
+INSERT INTO tb_tag(name, tag_type) VALUES ('pescatarian', 1);
+INSERT INTO tb_tag(name, tag_type) VALUES ('vegan', 1);
+
