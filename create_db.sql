@@ -6,7 +6,8 @@ CREATE TABLE tb_entity(
     username   VARCHAR(128) UNIQUE NOT NULL,
     password   TEXT NOT NULL,
     first_name VARCHAR(128) DEFAULT NULL,
-    last_name  VARCHAR(128) DEFAULT NULL
+    last_name  VARCHAR(128) DEFAULT NULL,
+    is_admin   boolean NOT NULL DEFAULT 'f'
 );
 
 CREATE TABLE tb_recipe(
@@ -41,7 +42,7 @@ CREATE UNIQUE INDEX uniq_entity_tag ON tb_entity_tag(entity, tag);
 CREATE TABLE tb_recipe_tag(
     recipe_tag SERIAL PRIMARY KEY,
     recipe INTEGER REFERENCES tb_recipe( recipe ),
-    tag    INTEGER REFERENCES tb_tag   ( tag    ),
+    tag    INTEGER REFERENCES tb_tag   ( tag    )
 );
 
 CREATE UNIQUE INDEX uniq_recipe_tag ON tb_recipe_tag(recipe, tag);
@@ -52,6 +53,7 @@ CREATE TABLE tb_meal_plan(
     meal_plan   SERIAL PRIMARY KEY,
     entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
     recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
+    eat_on      DATE NOT NULL,
     meal_type   meal_type NOT NULL
 );
 
@@ -68,7 +70,7 @@ CREATE TABLE tb_entity_recipe_rating(
                 CHECK (rating IS NOT NULL or is_favorite IS NOT NULL)
 );
 
-CREATE UNIQUE INDEX uniq_entity_recipe ON tb_entity_recipe_rating(entity, recipe);
+CREATE UNIQUE INDEX uniq_entity_recipe_rating ON tb_entity_recipe_rating(entity, recipe);
 
 CREATE TABLE tb_ingredient(
     ingredient SERIAL PRIMARY KEY,
@@ -93,4 +95,3 @@ INSERT INTO tb_tag(name, tag_type) VALUES ('vegetarian', 1);
 INSERT INTO tb_tag(name, tag_type) VALUES ('gluten-free', 1);
 INSERT INTO tb_tag(name, tag_type) VALUES ('pescatarian', 1);
 INSERT INTO tb_tag(name, tag_type) VALUES ('vegan', 1);
-

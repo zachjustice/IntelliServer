@@ -35,7 +35,9 @@ def verify_password(username_or_token, password):
     g.entity = entity
     return True
 
-def requires_admin(func):
+# ensure that entities can only access their own resources (one entity can't modify another's mealplan)
+# allow admins access to all resources
+def validate_access(func):
     def decorator(*args, **kwargs):
         # chec entity has admin access
         session = Session()
@@ -109,7 +111,7 @@ class EntitiesList(Resource):
         super(EntitiesList, self).__init__()
 
     @auth.login_required
-    @requires_admin
+    @validate_access
     def get(self):
         session = Session()
         entities = session.query(Entity).all()
@@ -159,7 +161,7 @@ class Entities(Resource):
         super(Entities, self).__init__()
 
     @auth.login_required
-    @requires_admin
+    @validate_access
     def get(self, entity_pk):
         session = Session()
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
@@ -206,16 +208,20 @@ class Entities(Resource):
                     dietary_concern = dietary_concern.lower().strip(' ')
                     tag = session.query(Tag).filter_by(name = dietary_concern, tag_type_pk = 1).first()
                 elif isinstance(dietary_concern, int):
-                    tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_pk = 1).first()
+                    tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_fk = 1).first()
                 else:
                     abort(400, "Dietary concern tag must be an integer or a string.")
 
                 if tag is None:
                     abort(400, "Dietary concern tag with primary key, " + str(tag) + ", does not exist.")
 
+<<<<<<< HEAD
                 if tag.tag_pk not in map(lambda t: t.tag_pk, entity.entity_tags):
+=======
+                if tag.tag_pk not in map(lambda t: t.tag_fk, entity.entity_tags): 
+>>>>>>> 6f7b7667006281fbbf80515c6f7627fdaa0cd1e1
                     # if this entity doesn't have this dietary concern, add the dietary concern
-                    entity_tag = EntityTag(entity_pk = entity.entity_pk, tag_pk = tag.tag_pk)
+                    entity_tag = EntityTag(entity_fk = entity.entity_pk, tag_fk = tag.tag_fk)
                     session.add(entity_tag)
 
         session.commit()
@@ -223,11 +229,16 @@ class Entities(Resource):
         return entity.as_dict()
 
     @auth.login_required
+    @validate_access
     def delete(self, entity_pk):
         session = Session()
-        entity = session.query(Entity).filter_by(entity = entity_pk).first()
+        entity = session.query(Entity).filter_by(entity_pk = entity_pk).first()
         if entity is None: # entity doesn't exist
             return None
+
+        for entity_tag in entity.entity_tags:
+            entity_tag = session.query(EntityTag).filter_by(entity_tag_pk = entity_tag.entity_tag_pk)
+            session.delete(entity_tag)
 
         session.delete(entity)
         session.commit()
@@ -245,29 +256,44 @@ class Tokens(Resource):
         #TODO store token in db and upon logout invalidate row
         pass
 
-class MealPlans(Resource):
+class EntityMealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('date' , required = False, type=str)
-        super(MealPlans, self).__init__()
+        self.reqparse.add_argument('date', required = True, type=str)
+        super(EntityMealPlans, self).__init__()
 
     @auth.login_required
-    def get(self):
-        args = self.reqparse.parse_args()
-        date = args['date']
+    @validate_access
+    def get(self, entity_pk):
+        params = self.reqparse.parse_args()
+        date = params['date']
+
+        session = Session()
 
         if date is None:
-            # if no meal plan is specified return the last 10
-            return meal_plans
+            # default to current date
+            day = time.day()
+            month = time.month()
+            year = time.year()
+            date = day + '-' + month + '-' + year
 
-        meal_plan = get_meal_plan(date)
+        meal_plans = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk,  MealPlan.eat_on == date).all()
 
-        if(meal_plan is None):
-            abort(400, "No meal plan exists for the date {}".format(date))
-        return meal_plan
+        if meal_plans is None:
+            null
+
+        meal_plan_dict = {}
+
+        for meal_plan in meal_plans:
+            if meal_plan.meal_type not in meal_plan_dict:
+                meal_plan_dict[meal_plan.meal_type] = []
+            meal_plan_dict[meal_plan.meal_type] = meal_plan.as_dict()
+
+        return meal_plan_dict
 
 api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
 api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
+<<<<<<< HEAD
 api.add_resource(MealPlans, '/api/v2.0/meal_plans', endpoint = 'mealplans')
 api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
@@ -385,9 +411,15 @@ def remove_account():
         del entities[entities.index(matching_entity[0])]
 
     return jsonify({'status': True})
+=======
+api.add_resource(EntityMealPlans, '/api/v2.0/entities/<int:entity_pk>/meal_plans', endpoint = 'entitymealplans')
+api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipes')
+api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
+api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
+>>>>>>> 6f7b7667006281fbbf80515c6f7627fdaa0cd1e1
 
 @app.errorhandler(400)
-def page_not_found(e):
+def bad_request(e):
     return {'error': 'Bad Request'}, 400
 
 @app.errorhandler(404)
@@ -395,11 +427,11 @@ def page_not_found(e):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
 @app.errorhandler(405)
-def application_error(e):
+def method_not_allowed(e):
     return make_response(jsonify({'error': 'Method not allowed'}), 405)
 
 @app.errorhandler(500)
-def application_error(e):
+def internal_error(e):
     return make_response(jsonify({'error': 'An unexpected error occured'}), 500)
 
 if __name__ == "__main__":
