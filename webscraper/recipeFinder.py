@@ -7,7 +7,7 @@ import pdb
 def getUrls():
     allUrls = []
     s = set()
-    for i in range(5):
+    for i in range(1):
         toAdd = getPage(i)
         allUrls.extend(toAdd)
         [s.add(url) for url in toAdd]
