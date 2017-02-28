@@ -215,11 +215,7 @@ class Entities(Resource):
                 if tag is None:
                     abort(400, "Dietary concern tag with primary key, " + str(tag) + ", does not exist.")
 
-<<<<<<< HEAD
                 if tag.tag_pk not in map(lambda t: t.tag_pk, entity.entity_tags):
-=======
-                if tag.tag_pk not in map(lambda t: t.tag_fk, entity.entity_tags): 
->>>>>>> 6f7b7667006281fbbf80515c6f7627fdaa0cd1e1
                     # if this entity doesn't have this dietary concern, add the dietary concern
                     entity_tag = EntityTag(entity_fk = entity.entity_pk, tag_fk = tag.tag_fk)
                     session.add(entity_tag)
@@ -293,130 +289,12 @@ class EntityMealPlans(Resource):
 
 api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
 api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
-<<<<<<< HEAD
-api.add_resource(MealPlans, '/api/v2.0/meal_plans', endpoint = 'mealplans')
 api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
 api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
 api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
-###################################################
-#############    Version 1      ###################
-###################################################
-
-@app.route( '/api/v1.0/login', methods = ['POST'] )
-def login():
-    if not request.json or not 'email' in request.json or not 'password' in request.json:
-        abort(400, 'Email and password must be provided.')
-
-    entity = _get_entity_by_email_and_password( request.json['email'], request.json['password'] )
-    if( entity is not None ):
-        entity['logged_in'] = True
-        return jsonify({'entity': entity})
-    else:
-        # user doesn't exist so logging in fails
-        return jsonify({'entity': None})
-
-def _get_entity_by_email_and_password( email, password ):
-    matching_entity = filter(
-        lambda entity: entity['email'] == email and entity['password'] == password,
-        entities
-    )
-
-    if len( matching_entity ) > 0:
-        return matching_entity[0]
-
-    return None
-
-@app.route( '/api/v1.0/register', methods = ['POST'] )
-def register():
-    if( not request.json
-    or not 'email' in request.json
-    or not 'username' in request.json
-    or not 'password' in request.json
-    or not 'firstName' in request.json
-    or not 'lastName' in request.json
-    or not 'password' in request.json ):
-        abort(400, 'Registration information is missing.')
-
-    email = request.json['email']
-    username = request.json['username']
-
-    matching_entities = filter(
-        lambda entity: entity['username'] == username or entity['email'] == email,
-        entities
-    )
-
-    if len( matching_entities ) > 0:
-        # The user already exists so notify user registration is false
-        return jsonify({'entity': None})
-
-    last_entity = max(entities, key=lambda e: e['entity'])
-    entity = {
-        'email' : email,
-        'entity' : last_entity['entity'] + 1,
-        'username' : username,
-        'password' : request.json['password'],
-        'first_name' : request.json['firstName'],
-        'last_name' : request.json['lastName'],
-        'logged_in' : True
-    }
-
-    entities.append(entity)
-
-    return jsonify({'entity': entity})
-
-@app.route( '/api/v1.0/entities', methods=['GET']  )
-def get_entities():
-    return jsonify({'entities': entities})
-
-@app.route( '/api/v1.0/logout', methods = ['PUT'] )
-def logout():
-    if not request.json or not 'email' in request.json:
-        abort(400, 'Email must be provided.')
-
-    matching_entity = filter(
-        lambda entity: entity['email'] == request.json['email'],
-        entities
-    )
-
-    if len( matching_entity ) > 1:
-        # Data integrity error so fail
-        abort(400, 'More than email was found when logging out user.')
-    if len( matching_entity ) == 0:
-        # Using an email which doesn't exist so fail
-        abort(400, 'This user account does not exist.')
-    else:
-        matching_entity = matching_entity[0]
-
-    matching_entity['logged_in'] = False
-    return jsonify({'status': True})
-
-@app.route( '/api/v1.0/remove_account', methods = ['POST'] )
-def remove_account():
-    if not request.json or not 'email' in request.json:
-        abort(400, 'Email must be provided.')
-
-    matching_entity = filter(
-        lambda entity: entity['email'] == request.json['email'],
-        entities
-    )
-
-    if len( matching_entity ) > 1:
-        # data integrity error so fail
-        abort(400, 'More than one email found when removing user account.')
-    if len( matching_entity ) == 0:
-        # don't need to remove anything, return false
-        return jsonify({'status': False})
-    else:
-        del entities[entities.index(matching_entity[0])]
-
-    return jsonify({'status': True})
-=======
 api.add_resource(EntityMealPlans, '/api/v2.0/entities/<int:entity_pk>/meal_plans', endpoint = 'entitymealplans')
-api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipes')
-api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
 api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
->>>>>>> 6f7b7667006281fbbf80515c6f7627fdaa0cd1e1
 
 @app.errorhandler(400)
 def bad_request(e):
