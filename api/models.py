@@ -39,6 +39,7 @@ class Entity(Base):
 
     def hash_password(self, password):
         self.password = pwd_context.encrypt(password)
+        print "encrypted password", self.password
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password)
@@ -75,6 +76,23 @@ class EntityTag(Base):
     def __repr__(self):
         return "<EntityTag(entity_tag ='%s' entity='%s', tag='%s')>" % ( self.entity_tag_pk, self.entity_fk, self.tag_fk )
 
+class TagType(Base):
+    __tablename__ = 'tb_tag_type'
+
+    tag_type_pk = Column("tag_type", Integer, primary_key=True)
+    name = Column(String)
+
+    tags = relationship("Tag", back_populates="tag_type")
+
+    def __repr__(self):
+        return "<Tag(tag_type_pk=%s, name='%s')>" % (self.tag_pk, self.name)
+
+    def as_dict(self):
+        return {
+            'tag_pk' : self.tag_pk,
+            'name' : self.name
+        }
+
 class Tag(Base):
     __tablename__ = 'tb_tag'
 
@@ -83,6 +101,7 @@ class Tag(Base):
     name = Column(String)
 
     entity_tags = relationship("EntityTag", back_populates="tag")
+    tag_type = relationship("TagType", back_populates="tags")
 
     def __repr__(self):
         return "<Tag(tag_pk=%s, tag_type_fk=%s, name='%s')>" % (self.tag_pk, self.tag_type_fk, self.name)
@@ -115,14 +134,14 @@ class RecipeTag(Base):
      __tablename__ = 'tb_recipe_tag'
 
      recipe_tag = Column(Integer, primary_key=True)
-     recipe = Column(Integer)
-     tag = Column(Integer)
+     recipe_fk = Column(Integer, ForeignKey('tb_recipe.recipe'))
+     tag_fk = Column(Integer, ForeignKey('tb_tag.tag'))
 
      def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
      def __repr__(self):
-        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')>" % ( self.recipe, self.name, self.description, self.preparation_time)
+        return "<RecipeTag(recipe=%s recipe_fk=%s, tag_fk=%s)>" % (self.recipe, self.recipe_fk, self.tag_fk)
 
 class MealPlan(Base):
     __tablename__ = 'tb_meal_plan'

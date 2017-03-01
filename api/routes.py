@@ -11,12 +11,12 @@ auth = HTTPBasicAuth()
 def verify_password(username_or_token, password):
     # first try to authenticate by token
     entity = Entity.verify_auth_token(username_or_token)
-    print "username:", username_or_token
 
-    if not entity:
+    if entity is None:
         # try to authenticate with username/password
         session = Session()
         entity = session.query(Entity).filter_by(username = username_or_token).first()
+        entities = session.query(Entity).all()
 
         if not entity or not entity.verify_password(password):
             return False
@@ -29,8 +29,6 @@ def verify_password(username_or_token, password):
 def validate_access(func):
     def decorator(*args, **kwargs):
         # chec entity has admin access
-        session = Session()
-
 	if not g.entity.is_admin:
             # if the entity isn't admin, give it access to resources it owns
             if 'entity_pk' not in kwargs or g.entity.entity_pk != kwargs['entity_pk']:
@@ -244,12 +242,13 @@ class Tokens(Resource):
 class EntityMealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('date', required = True, type=str)
+        self.reqparse.add_argument('date', required = False, type=str)
         super(EntityMealPlans, self).__init__()
 
     @auth.login_required
     @validate_access
     def get(self, entity_pk):
+        import time
         params = self.reqparse.parse_args()
         date = params['date']
 
@@ -257,10 +256,7 @@ class EntityMealPlans(Resource):
 
         if date is None:
             # default to current date
-            day = time.day()
-            month = time.month()
-            year = time.year()
-            date = day + '-' + month + '-' + year
+            date = time.strftime("%Y-%m-%d")
 
         meal_plans = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk,  MealPlan.eat_on == date).all()
 
@@ -275,6 +271,43 @@ class EntityMealPlans(Resource):
             meal_plan_dict[meal_plan.meal_type] = meal_plan.as_dict()
 
         return meal_plan_dict
+
+class TagsList(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('tag_type_pk', required = False, type=int)
+        self.reqparse.add_argument('tag_type_name', required = False, type=str)
+        super(TagsList, self).__init__()
+
+    @auth.login_required
+    def get(self):
+        params = self.reqparse.parse_args()
+        tag_type_pk = params['tag_type_pk']
+        tag_type_name = params['tag_type_name']
+        session = Session()
+        return 'asf'
+
+'''
+        print ""
+        print "params", params
+        print ""
+
+        tags = None
+        if tag_type_pk is not None:
+            tags = session.query(Tag).filter_by(tag_type_fk = tag_type_pk).all()
+        elif tag_type_name is not None:
+            tags = session.query(Tag).filter(tag.tag_type.tag_type_pk == tag_type_pk).all()
+        else:
+            tags = session.query(Tag).all()
+
+        print ""
+        print(tags)
+        print ""
+        return map(lambda tag: tag.as_dist(), tags)
+'''
+
+
+my_api.add_resource(TagsList, '/api/v2.0/tags', endpoint = 'tagslist')
 
 my_api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
 my_api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
