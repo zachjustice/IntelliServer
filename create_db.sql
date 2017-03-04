@@ -1,6 +1,4 @@
-CREATE DATABASE intellichef;
-
-CREATE TABLE tb_entity(
+CREATE TABLE IF NOT EXISTS tb_entity(
     entity     SERIAL PRIMARY KEY,
     email      VARCHAR(128) UNIQUE NOT NULL,
     username   VARCHAR(128) UNIQUE NOT NULL,
@@ -10,7 +8,7 @@ CREATE TABLE tb_entity(
     is_admin   boolean NOT NULL DEFAULT 'f'
 );
 
-CREATE TABLE tb_recipe(
+CREATE TABLE IF NOT EXISTS tb_recipe(
     recipe           SERIAL PRIMARY KEY,
     name             VARCHAR(128) NOT NULL,
     instructions     TEXT UNIQUE NOT NULL,
@@ -18,12 +16,12 @@ CREATE TABLE tb_recipe(
     preparation_time INT NOT NULL
 );
 
-CREATE TABLE tb_tag_type(
+CREATE TABLE IF NOT EXISTS tb_tag_type(
     tag_type SERIAL PRIMARY KEY,
     name     VARCHAR(128) UNIQUE NOT NULL
 );
 
-CREATE TABLE tb_tag(
+CREATE TABLE IF NOT EXISTS tb_tag(
     tag      SERIAL PRIMARY KEY,
     tag_type INTEGER NOT NULL REFERENCES tb_tag_type( tag_type ),
     name     VARCHAR(128) UNIQUE NOT NULL
@@ -31,7 +29,7 @@ CREATE TABLE tb_tag(
 
 CREATE UNIQUE INDEX uniq_tag_type_name ON tb_tag(tag_type, name);
 
-CREATE TABLE tb_entity_tag(
+CREATE TABLE IF NOT EXISTS tb_entity_tag(
     entity_tag SERIAL PRIMARY KEY,
     entity     INTEGER NOT NULL REFERENCES tb_entity(entity),
     tag        INTEGER NOT NULL REFERENCES tb_tag(tag)
@@ -39,7 +37,7 @@ CREATE TABLE tb_entity_tag(
 
 CREATE UNIQUE INDEX uniq_entity_tag ON tb_entity_tag(entity, tag);
 
-CREATE TABLE tb_recipe_tag(
+CREATE TABLE IF NOT EXISTS tb_recipe_tag(
     recipe_tag SERIAL PRIMARY KEY,
     recipe INTEGER REFERENCES tb_recipe( recipe ),
     tag    INTEGER REFERENCES tb_tag   ( tag    )
@@ -49,7 +47,7 @@ CREATE UNIQUE INDEX uniq_recipe_tag ON tb_recipe_tag(recipe, tag);
 
 CREATE TYPE meal_type AS ENUM('breakfast', 'lunch', 'dinner');
 
-CREATE TABLE tb_meal_plan(
+CREATE TABLE IF NOT EXISTS tb_meal_plan(
     meal_plan   SERIAL PRIMARY KEY,
     entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
     recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
@@ -59,7 +57,7 @@ CREATE TABLE tb_meal_plan(
 
 CREATE UNIQUE INDEX uniq_entity_recipe ON tb_meal_plan(entity, recipe, meal_type);
 
-CREATE TABLE tb_entity_recipe_rating(
+CREATE TABLE IF NOT EXISTS tb_entity_recipe_rating(
     meal_plan   SERIAL PRIMARY KEY,
     entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
     recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
@@ -72,12 +70,12 @@ CREATE TABLE tb_entity_recipe_rating(
 
 CREATE UNIQUE INDEX uniq_entity_recipe_rating ON tb_entity_recipe_rating(entity, recipe);
 
-CREATE TABLE tb_ingredient(
+CREATE TABLE IF NOT EXISTS tb_ingredient(
     ingredient SERIAL PRIMARY KEY,
     name       VARCHAR(128) UNIQUE NOT NULL
 );
 
-CREATE TABLE tb_ingredient_recipe(
+CREATE TABLE IF NOT EXISTS tb_ingredient_recipe(
     ingredient        INTEGER REFERENCES tb_ingredient( ingredient ),
     recipe            INTEGER REFERENCES tb_recipe( recipe ),
     quantity          VARCHAR(20) DEFAULT NULL,
