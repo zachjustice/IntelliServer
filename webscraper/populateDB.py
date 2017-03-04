@@ -35,9 +35,10 @@ def generateCalibrationPksFromFile():
 
 def scrapeAndPopulate():
     urls = getUrls()
-    ingredients, recipes = parseRecipes(urls)
-    insertIngredientsAndRecipes(ingredients, recipes)
+    for categoryUrls in urls:
+        ingredients, recipes = parseRecipes(categoryUrls[1], categoryUrls[0])
+        insertIngredientsAndRecipes(ingredients, recipes)
 
 
-generateCalibrationPksFromFile()
-#scrapeAndPopulate()
+#generateCalibrationPksFromFile()
+scrapeAndPopulate()

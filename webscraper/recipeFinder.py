@@ -4,29 +4,53 @@ except ImportError:
     import urllib2
 from bs4 import BeautifulSoup
 import pdb
+from selenium import webdriver
+
 def getUrls():
+    categories = [('78/breakfast-and-brunch/', ['breakfast']), ('17561/lunch/', ['lunch']), ('17562/dinner/', ['dinner']), ('80/main-dish/', ['lunch', 'dinner'])]
+    #categories = [('80/main-dish/', ['lunch', 'dinner'])]
+    numPages = 3 #try max pages from each category
+    allUrls = getCategoryUrls(categories, numPages)
+    return allUrls
+
+
+def getCategoryUrls(categories, numPages):
     allUrls = []
-    s = set()
-    for i in range(1):
-        toAdd = getPage(i)
-        allUrls.extend(toAdd)
-        [s.add(url) for url in toAdd]
-    print (len(allUrls))
-    return s
-def getPage(page):
-    base = "https://allrecipes.com/"
-    url = base + "?page=" + str(page);
-    page = urllib2.urlopen(url).read();
+    for categoryBase in categories:
+        s = set()
+        for i in range(numPages):
+            toAdd = getPage(categoryBase[0], i)
+            if toAdd is None:
+                break
+            else:
+                [s.add(url) for url in toAdd]
+        allUrls.append((categoryBase[1], s))
+    return allUrls
+
+def getPage(categoryBase, page):
+    base = "http://allrecipes.com/recipes/"
+    url = base + categoryBase + "?page=" + str(page) + str("#0");
+    print(str(url))
+    try:
+        page = urllib2.urlopen("http://allrecipes.com").read();
+    except Exception as e:
+        print(e)
+        return None
     soup = BeautifulSoup(page, "html.parser");
 
     urlSuffixes = [];
+    #pdb.set_trace()
 
     body_content = soup.find("div", {"class": "container-content body-content"});
-    section = body_content.find("section", {"id": "ar_home_index"});
-    grid = section.find("section", {"id": "grid"});
+    grid = body_content.find("section", {"id": "grid"});
     for article in grid.findAll("article", {"class": "grid-col--fixed-tiles"}):
-        link = article.find("a")
+        link = None
+        links = article.findAll("a")
+        if len(links) > 1:
+            link = links[1]
         if link is not None:
             urlSuffixes.append(link.get("href"));
-    completeUrls = [base + urlSuffix for urlSuffix in urlSuffixes if urlSuffix[:7] == "/recipe"]
+    recipeBase = "http://allrecipes.com"
+    completeUrls = [recipeBase + urlSuffix for urlSuffix in urlSuffixes if urlSuffix[:7] == "/recipe"]
+    print (completeUrls)
     return completeUrls

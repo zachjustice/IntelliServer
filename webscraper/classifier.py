@@ -7,12 +7,37 @@ from collections import defaultdict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from dump_recipe_and_ingredient_data import getRecipeData
+from dump_recipe_and_ingredient_data import getRecipeTagData
+from db import get_most_popular_by_tag
 from collections import defaultdict
 from scipy import sparse
 
-#highest level method - given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
-def generateMealPlan(userRecipes, mealPlanSize = 10, calibrationThreshold = 5):
-    recipes = getRecipeData()
+#highest level method for generating a mealplan - generates a mealplan for numDays days including breakfast, lunch, and dinner
+#note: the userRecipes are expected to be a list of 3 lists - one for each mealType in the order [breakfast list], [lunch list], [dinner list]
+def generateMealPlan(userRecipes, numDays):
+    mealPlan = []
+    #breakfast
+    breakfastPks = userRecipes[0]
+    if len(breakfastPks) == 0:
+        breakfastPks.append(get_most_popular_by_tag('breakfast'))
+    mealPlan.append(generateTypedMealPlan(breakfastPks, 'breakfast'), numDays)
+
+    #lunch
+    lunchPks = userRecipes[1]
+    if len(lunchPks) is 0:
+        lunchPks.append(get_most_popular_by_tag('lunch'))
+    mealPlan.append(generateTypedMealPlan(lunchPks, 'lunch'), numDays)
+
+    #dinner
+    dinnerPks = userRecipes[2]
+    if len(dinnerPks) == 0:
+        dinnerPks.append(get_most_popular_by_tag('dinner'))
+    mealPlan.append(generateTypedMealPlan(dinnerPks, 'dinner'), numDays)
+    return mealPlan
+
+#given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
+def generateTypedMealPlan(userRecipes, mealType, mealPlanSize = 7, calibrationThreshold = 7):
+    recipes = getRecipeTagData(mealType)
     tfidfMatrix = setupTfidfMatrix(recipes)
     matchingList = []
     for calibrationPk in userRecipes:

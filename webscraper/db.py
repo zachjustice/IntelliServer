@@ -65,6 +65,56 @@ def get_all_recipes(conn):
     recipes = fetchall(conn, query)
     return recipes
 
+def get_all_tag_recipes(conn, tag):
+    query = """
+    SELECT
+        r.recipe,
+        r.name,
+        r.instructions,
+        r.description,
+        array_agg(i.ingredient) as "ingredients",
+        array_agg(i.name) as "ingredient_names"
+    FROM tb_recipe r
+    JOIN tb_ingredient_recipe ir
+    ON ir.recipe = r.recipe
+    JOIN tb_ingredient i
+    ON i.ingredient = ir.ingredient
+    JOIN tb_recipe_tag rt
+    ON r.recipe = rt.recipe
+    JOIN tb_tag t
+    ON rt.tag = t.tag
+    WHERE t.name = 'breakfast'
+    GROUP BY r.recipe, r.name, r.instructions, r.description, r.preparation_time
+    """
+
+    recipes = fetchall(conn, query, tag)
+    return recipes
+
+def get_most_popular_by_tag(conn, tag):
+    query = """
+    SELECT
+        r.recipe,
+        r.name,
+        r.instructions,
+        r.description,
+        array_agg(i.ingredient) as "ingredients",
+        array_agg(i.name) as "ingredient_names"
+    FROM tb_recipe r
+    JOIN tb_ingredient_recipe ir
+    ON ir.recipe = r.recipe
+    JOIN tb_ingredient i
+    ON i.ingredient = ir.ingredient
+    JOIN tb_recipe_tag rt
+    ON r.recipe = rt.recipe
+    JOIN tb_tag t
+    ON rt.tag = t.tag
+    WHERE t.name = 'breakfast'
+    GROUP BY r.recipe, r.name, r.instructions, r.description, r.preparation_time
+    """
+
+    recipes = fetchall(conn, query, tag)
+    return recipes
+
 def insertIngredientsAndRecipes(ingredients, recipes):
     (conn, cur) = connect()
     insertIngredients(ingredients, cur)
