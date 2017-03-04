@@ -55,8 +55,6 @@ CREATE TABLE IF NOT EXISTS tb_meal_plan(
     meal_type   meal_type NOT NULL
 );
 
-CREATE UNIQUE INDEX uniq_entity_recipe ON tb_meal_plan(entity, recipe, meal_type);
-
 CREATE TABLE IF NOT EXISTS tb_entity_recipe_rating(
     entity_recipe_rating   SERIAL PRIMARY KEY,
     entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
