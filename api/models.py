@@ -7,6 +7,9 @@ from api import secret_key, Session
 
 Base = declarative_base()
 
+def map_to_list(map):
+    return list(map)
+
 class Entity(Base):
     __tablename__ = 'tb_entity'
 
@@ -43,7 +46,7 @@ class Entity(Base):
 
     def hash_password(self, password):
         self.password = pwd_context.encrypt(password)
-        print "encrypted password", self.password
+        print ("encrypted password", self.password)
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password)
@@ -201,3 +204,4 @@ class Allergy(Base):
             'entity_fk': self.entity_fk,
             'ingredient_fk' : self.ingredient_fk
         }
+

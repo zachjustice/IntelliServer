@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, abort, make_response, request, g
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
-from models import *
+from webscraper import *
+from api.models import *
 from api import app, Session
 
 my_api = Api(app) # resources are added to this object
@@ -29,16 +30,16 @@ def verify_password(username_or_token, password):
 def validate_access(func):
     def decorator(*args, **kwargs):
         # chec entity has admin access
-	if not g.entity.is_admin:
+        if not g.entity.is_admin:
             # if the entity isn't admin, give it access to resources it owns
             if 'entity_pk' not in kwargs or g.entity.entity_pk != kwargs['entity_pk']:
-		res = make_response("Unauthorized Access")
-		if res.status_code == 200:
-		    # if user didn't set status code, use 401
-		    res.status_code = 401
-		if 'WWW-Authenticate' not in res.headers.keys():
-		    res.headers['WWW-Authenticate'] = auth.authenticate_header()
-		return res
+                res = make_response("Unauthorized Access")
+                if res.status_code == 200:
+                    # if user didn't set status code, use 401
+                    res.status_code = 401
+                if 'WWW-Authenticate' not in res.headers.keys():
+                    res.headers['WWW-Authenticate'] = auth.authenticate_header()
+                return res
         return func(*args, **kwargs)
     return decorator
 
@@ -61,8 +62,8 @@ class RecipesList(Resource):
 
     @auth.login_required
     def get(self):
-	params = self.reqparse.parse_args()
-	session = Session()
+        params = self.reqparse.parse_args()
+        session = Session()
 
         if params['is_calibration_recipe'] is not None:
             if params['is_calibration_recipe']:
@@ -84,7 +85,7 @@ class RecipeRatings(Resource):
 
     @auth.login_required
     def post(self):
-	recipe_rating = self.reqparse.parse_args()
+        recipe_rating = self.reqparse.parse_args()
         recipe_rating = create_or_update_recipe_rating( recipe_rating )
 
         if( recipe_rating is None ):
@@ -112,7 +113,7 @@ class EntitiesList(Resource):
 
     def post(self):
         session = Session()
-	new_entity = self.reqparse.parse_args()
+        new_entity = self.reqparse.parse_args()
 
         # check username
         existing_entity = session.query(Entity).filter(Entity.email == new_entity.email).first()
@@ -123,14 +124,14 @@ class EntitiesList(Resource):
         if existing_entity is not None: # user exists
             return abort(400, "A user already exists with this username.")
 
-	entity = Entity(
-	    first_name=new_entity.first_name,
-	    last_name=new_entity.last_name,
-	    username=new_entity.username,
-	    email=new_entity.email
-	)
+        entity = Entity(
+                first_name=new_entity.first_name,
+                last_name=new_entity.last_name,
+                username=new_entity.username,
+                email=new_entity.email
+                )
 
-	entity.hash_password(new_entity.password)
+        entity.hash_password(new_entity.password)
 
         session.add(entity)
         session.commit()
@@ -257,8 +258,8 @@ class Entities(Resource):
 class Tokens(Resource):
     @auth.login_required
     def get(self):
-	token = g.entity.generate_auth_token(60000) # expires after 16.6 hours
-	return { 'token': token.decode('ascii') }
+        token = g.entity.generate_auth_token(60000) # expires after 16.6 hours
+        return { 'token': token.decode('ascii') }
 
     @auth.login_required
     def delete(self):
@@ -272,9 +273,9 @@ class TagsList(Resource):
         super(TagsList, self).__init__()
 
     def get(self):
-        print "hello"
+        print("hello")
         params = self.reqparse.parse_args()
-        print params
+        print (params)
         return 'asfd'
 
 class EntityMealPlans(Resource):
@@ -311,26 +312,11 @@ class EntityMealPlans(Resource):
         return meal_plan_dict
 
     def post(self, entity_pk):
-        #session = Session()
-	#params = self.reqparse.parse_args()
+        session = Session()
+        params = self.reqparse.parse_args()
 
         ## check username
         #existing_entity = session.query(Entity).filter(Entity.email == new_entity.email).first()
-        #if existing_entity is not None: # user exists
-        #    return abort(400, "A user already exists with this email.")
-
-        #existing_entity = session.query(Entity).filter(Entity.username == new_entity.username).first()
-        #if existing_entity is not None: # user exists
-        #    return abort(400, "A user already exists with this username.")
-
-	#entity = Entity(
-	#    first_name=new_entity.first_name,
-	#    last_name=new_entity.last_name,
-	#    username=new_entity.username,
-	#    email=new_entity.email
-	#)
-
-	#entity.hash_password(new_entity.password)
 
         #session.add(entity)
         #session.commit()
