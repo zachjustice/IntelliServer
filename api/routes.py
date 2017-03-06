@@ -266,16 +266,11 @@ class Tokens(Resource):
         pass
 
 class TagsList(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('tag_type')
-        super(TagsList, self).__init__()
-
-    def get(self):
-        print "hello"
-        params = self.reqparse.parse_args()
-        print params
-        return 'asfd'
+    @auth.login_required
+    def get(self, tag_type_pk):
+        session = Session()
+        tags = session.query(Tag).filter_by(tag_type_fk = tag_type_pk).all()
+        return map(lambda t: t.as_dict(), tags)
 
 class EntityMealPlans(Resource):
     def __init__(self):
@@ -310,8 +305,7 @@ class EntityMealPlans(Resource):
 
         return meal_plan_dict
 
-
-my_api.add_resource(TagsList, '/api/v2.0/tags', endpoint = 'tagslist')
+my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
 
 my_api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
 my_api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
