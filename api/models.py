@@ -19,6 +19,7 @@ class Entity(Base):
     email = Column(String)
 
     entity_tags = relationship("EntityTag", back_populates="entity")
+    allergies = relationship("Allergy", back_populates="entity")
     meal_plans = relationship("MealPlan", back_populates="entity")
 
     def __repr__(self):
@@ -26,7 +27,9 @@ class Entity(Base):
 
     def as_dict(self):
         dietary_concern_tags = filter(lambda entity_tag: entity_tag.tag.tag_type_fk == 1, self.entity_tags)
-        dietary_concern_tags = map(lambda entity_tag: entity_tag.tag.as_dict(), dietary_concern_tags) 
+        dietary_concern_tags = map(lambda entity_tag: entity_tag.tag.as_dict(), dietary_concern_tags)
+
+        allergies = map(lambda allergy: allergy.ingredient.as_dict(), self.allergies)
 
         return {
             'entity_pk' : self.entity_pk,
@@ -34,7 +37,8 @@ class Entity(Base):
             'first_name' : self.first_name,
             'last_name' : self.last_name,
             'email' : self.email,
-            'dietary_concerns' : dietary_concern_tags
+            'dietary_concerns' : dietary_concern_tags,
+            'allergies' : allergies
         }
 
     def hash_password(self, password):
@@ -94,24 +98,25 @@ class TagType(Base):
         }
 
 class Tag(Base):
-    __tablename__ = 'tb_tag'
+     __tablename__ = 'tb_tag'
 
-    tag_pk = Column("tag", Integer, primary_key=True)
-    tag_type_fk = Column("tag_type", Integer, ForeignKey('tb_tag_type.tag_type'))
-    name = Column(String)
+     tag_pk = Column("tag", Integer, primary_key=True)
+     tag_type_fk = Column("tag_type", Integer, ForeignKey('tb_tag_type.tag_type'))
+     name = Column(String)
 
-    entity_tags = relationship("EntityTag", back_populates="tag")
-    tag_type = relationship("TagType", back_populates="tags")
+     entity_tags = relationship("EntityTag", back_populates="tag")
+     tag_type    = relationship("TagType", back_populates="tags") # plural bc many to one
+     recipe_tags = relationship("RecipeTag", back_populates="tag")
 
-    def __repr__(self):
-        return "<Tag(tag_pk=%s, tag_type_fk=%s, name='%s')>" % (self.tag_pk, self.tag_type_fk, self.name)
+     def __repr__(self):
+         return "<Tag(tag_pk=%s, tag_type_fk=%s, name='%s')>" % (self.tag_pk, self.tag_type_fk, self.name)
 
-    def as_dict(self):
-        return {
-            'tag_pk' : self.tag_pk,
-            'tag_type_fk' : self.tag_type_fk,
-            'name' : self.name
-        }
+     def as_dict(self):
+         return {
+             'tag_pk' : self.tag_pk,
+             'tag_type_fk' : self.tag_type_fk,
+             'name' : self.name
+         }
 
 class Recipe(Base):
      __tablename__ = 'tb_recipe'
@@ -123,6 +128,7 @@ class Recipe(Base):
      preparation_time = Column(Integer)
 
      meal_plans = relationship("MealPlan", back_populates="recipe")
+     recipe_tags = relationship("RecipeTag", back_populates="recipe")
 
      def __repr__(self):
         return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')>" % ( self.recipe, self.name, self.description, self.preparation_time)
@@ -134,8 +140,11 @@ class RecipeTag(Base):
      __tablename__ = 'tb_recipe_tag'
 
      recipe_tag = Column(Integer, primary_key=True)
-     recipe_fk = Column(Integer, ForeignKey('tb_recipe.recipe'))
-     tag_fk = Column(Integer, ForeignKey('tb_tag.tag'))
+     recipe_fk = Column("recipe", Integer, ForeignKey('tb_recipe.recipe'))
+     tag_fk = Column("tag", Integer, ForeignKey('tb_tag.tag'))
+
+     recipe = relationship("Recipe", back_populates="recipe_tags")
+     tag = relationship("Tag", back_populates="recipe_tags")
 
      def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -161,4 +170,34 @@ class MealPlan(Base):
             'entity_fk' : self.entity_fk,
             'recipe_fk' : self.recipe_fk,
             'meal_type' : self.meal_type
+        }
+
+class Ingredient(Base):
+    __tablename__ = 'tb_ingredient'
+
+    ingredient_pk = Column('ingredient', Integer, primary_key=True)
+    name = Column('name', String)
+
+    allergies = relationship("Allergy", back_populates="ingredient")
+
+    def as_dict(self):
+        return {
+            'ingredient_pk' : self.ingredient_pk,
+            'name' : self.name
+        }
+
+class Allergy(Base):
+    __tablename__ = 'tb_allergy'
+
+    allergy_pk = Column('allergy', Integer, primary_key=True)
+    entity_fk = Column('entity', Integer, ForeignKey('tb_entity.entity'), nullable=False)
+    ingredient_fk = Column('ingredient', Integer, ForeignKey('tb_ingredient.ingredient'), nullable=False)
+
+    ingredient = relationship("Ingredient", back_populates="allergies")
+    entity = relationship("Entity", back_populates="allergies")
+
+    def as_dict(self):
+        return {
+            'entity_fk': self.entity_fk,
+            'ingredient_fk' : self.ingredient_fk
         }

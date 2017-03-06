@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, abort, make_response, request, g
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
-from models import Entity, Recipe, Tag, EntityTag, RecipeTag, MealPlan
+from models import *
 from api import app, Session
 
 my_api = Api(app) # resources are added to this object
@@ -42,7 +42,6 @@ def validate_access(func):
         return func(*args, **kwargs)
     return decorator
 
-
 ###################################################
 #############    Version 2      ###################
 ###################################################
@@ -53,21 +52,27 @@ class Recipes(Resource):
         recipe = session.query(Recipe).filter_by(recipe=recipe_pk).first()
         return recipe.as_dict()
 
-
 class RecipesList(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('sort_by', required=False, type=str)
+        self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool)
         super(RecipesList, self).__init__()
 
     @auth.login_required
     def get(self):
-	recipe_params = self.reqparse.parse_args()
-        if recipe_params['sort_by'] == 'popular':
-            return get_most_popular_recipes()
-        if recipe_params['sort_by'] == 'calibration_recipes':
-            return get_calibration_recipes()
-        return get_recipes()
+	params = self.reqparse.parse_args()
+	session = Session()
+
+        if params['is_calibration_recipe'] is not None:
+            if params['is_calibration_recipe']:
+                recipes = session.query(Recipe).join(RecipeTag).join(Tag).filter(Tag.name == 'calibration').all()
+            else:
+                recipes = session.query(Recipe).join(RecipeTag).join(Tag).filter(Tag.name != 'calibration').all()
+            return map(lambda r: r.as_dict(), recipes)
+
+        recipes = session.query(Recipe).all()
+        return map(lambda r: r.as_dict(), recipes)
 
 class RecipeRatings(Resource):
     def __init__(self):
@@ -186,6 +191,27 @@ class Entities(Resource):
                 abort(400, "Password must be at least 6 characters.")
             entity.password = params['password']
 
+        if params['allergies'] is not None:
+            allergies = params['allergies']
+
+            for allergy in allergies:
+                ingredient = None
+                if isinstance(allergy, basestring):
+                    allergy = allergy.lower().strip(' ')
+                    ingredient = session.query(Ingredient).filter_by(name = allergy).first()
+                elif isinstance(allergy, int):
+                    ingredient = session.query(Ingredient).filter_by(ingredient_pk = allergy).first()
+                else:
+                    abort(400, "Allergy must be an integer or a string.")
+
+                if ingredient is None:
+                    abort(400, "Allergy, " + str(ingredient) + ", does not exist.")
+
+                if ingredient.ingredient_pk not in map(lambda a: a.ingredient_fk, entity.allergies):
+                    # if this entity doesn't have this dietary concern, add the dietary concern
+                    allergy = Allergy(entity_fk = entity.entity_pk, ingredient_fk = ingredient.ingredient_pk)
+                    session.add(allergy)
+
         if params['dietary_concerns'] is not None:
             dietary_concerns = params['dietary_concerns']
 
@@ -202,9 +228,9 @@ class Entities(Resource):
                 if tag is None:
                     abort(400, "Dietary concern tag with primary key, " + str(tag) + ", does not exist.")
 
-                if tag.tag_pk not in map(lambda t: t.tag_pk, entity.entity_tags):
+                if tag.tag_pk not in map(lambda t: t.tag_fk, entity.entity_tags):
                     # if this entity doesn't have this dietary concern, add the dietary concern
-                    entity_tag = EntityTag(entity_fk = entity.entity_pk, tag_fk = tag.tag_fk)
+                    entity_tag = EntityTag(entity_fk = entity.entity_pk, tag_fk = tag.tag_pk)
                     session.add(entity_tag)
 
         session.commit()
@@ -239,6 +265,18 @@ class Tokens(Resource):
         #TODO store token in db and upon logout invalidate row
         pass
 
+class TagsList(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('tag_type')
+        super(TagsList, self).__init__()
+
+    def get(self):
+        print "hello"
+        params = self.reqparse.parse_args()
+        print params
+        return 'asfd'
+
 class EntityMealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -271,40 +309,6 @@ class EntityMealPlans(Resource):
             meal_plan_dict[meal_plan.meal_type] = meal_plan.as_dict()
 
         return meal_plan_dict
-
-class TagsList(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('tag_type_pk', required = False, type=int)
-        self.reqparse.add_argument('tag_type_name', required = False, type=str)
-        super(TagsList, self).__init__()
-
-    @auth.login_required
-    def get(self):
-        params = self.reqparse.parse_args()
-        tag_type_pk = params['tag_type_pk']
-        tag_type_name = params['tag_type_name']
-        session = Session()
-        return 'asf'
-
-'''
-        print ""
-        print "params", params
-        print ""
-
-        tags = None
-        if tag_type_pk is not None:
-            tags = session.query(Tag).filter_by(tag_type_fk = tag_type_pk).all()
-        elif tag_type_name is not None:
-            tags = session.query(Tag).filter(tag.tag_type.tag_type_pk == tag_type_pk).all()
-        else:
-            tags = session.query(Tag).all()
-
-        print ""
-        print(tags)
-        print ""
-        return map(lambda tag: tag.as_dist(), tags)
-'''
 
 
 my_api.add_resource(TagsList, '/api/v2.0/tags', endpoint = 'tagslist')

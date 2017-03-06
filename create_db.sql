@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS tb_ingredient(
 );
 
 CREATE TABLE IF NOT EXISTS tb_ingredient_recipe(
+    ingredient_recipe SERIAL PRIMARY KEY,
     ingredient        INTEGER REFERENCES tb_ingredient( ingredient ),
     recipe            INTEGER REFERENCES tb_recipe( recipe ),
     quantity          VARCHAR(20) DEFAULT NULL,
@@ -81,6 +82,14 @@ CREATE TABLE IF NOT EXISTS tb_ingredient_recipe(
     description       TEXT DEFAULT NULL,
     preparation_notes TEXT DEFAULT NULL
 );
+
+CREATE TABLE IF NOT EXISTS tb_allergy(
+    allergy    SERIAL PRIMARY KEY,
+    entity     INTEGER REFERENCES tb_entity(entity),
+    ingredient INTEGER REFERENCES tb_ingredient(ingredient)
+);
+
+CREATE UNIQUE INDEX uniq_entity_ingredient ON tb_allergy(entity, ingredient);
 
 INSERT INTO tb_tag_type(name) VALUES ('SYSTEM');
 INSERT INTO tb_tag(tag_type, name) VALUES(1, 'calibration');
