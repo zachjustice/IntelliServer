@@ -272,6 +272,38 @@ class EntityMealPlans(Resource):
 
         return meal_plan_dict
 
+    def post(self, entity_pk):
+        #session = Session()
+	#params = self.reqparse.parse_args()
+
+        ## check username
+        #existing_entity = session.query(Entity).filter(Entity.email == new_entity.email).first()
+        #if existing_entity is not None: # user exists
+        #    return abort(400, "A user already exists with this email.")
+
+        #existing_entity = session.query(Entity).filter(Entity.username == new_entity.username).first()
+        #if existing_entity is not None: # user exists
+        #    return abort(400, "A user already exists with this username.")
+
+	#entity = Entity(
+	#    first_name=new_entity.first_name,
+	#    last_name=new_entity.last_name,
+	#    username=new_entity.username,
+	#    email=new_entity.email
+	#)
+
+	#entity.hash_password(new_entity.password)
+
+        #session.add(entity)
+        #session.commit()
+
+        #g.entity = entity
+        #entity_dict = entity.as_dict()
+        #entity_dict['token'] = entity.generate_auth_token(60000)
+
+        #return entity_dict
+        pass
+
 class TagsList(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
