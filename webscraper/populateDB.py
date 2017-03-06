@@ -1,37 +1,57 @@
 import sys
+import pdb
+import numpy as np
 from recipeFinder import getUrls
 from recipeParser import parseRecipes
 from classifier import generateMealPlan
 from db import insertIngredientsAndRecipes
 
-def generateCalibrationPksFromFile():
-    if len(sys.argv) > 1:
-        #load file stuff
-        print ("Reading calibration recipes from: " + str(sys.argv[1]))
-        filename = sys.argv[1]
-        lines = [line.rstrip('\n') for line in open(filename)]
-        calibrationUrls = []
-        currUser = []
-        for line in lines:
-            if line is '':
-                calibrationUrls.append(currUser)
-                currUser = []
-            else:
-                currUser.append(line)
 
-        #inserting calibrated recipes into db
-        for userRecipes in calibrationUrls:
-            userPks = []
-            userInputNames = []
-            calibrationIngredients, calibrationRecipes = parseRecipes(userRecipes)
-            insertIngredientsAndRecipes(calibrationIngredients, calibrationRecipes)
-            for r in calibrationRecipes:
-                userPks.append(r.recipePk)
-                userInputNames.append(r.name)
-            print("INPUT: " + str(userInputNames) + "\n" + "OUTPUT: " + str(generateMealPlan(userPks)))
-    else:
-        print ("Enter the filename as a command line argument!")
-        sys.exit(0)
+def generateCalibrationPksFromFile():
+    filename = input("Enter calibration filename: ")
+    #load file stuff
+    print ("Reading calibration recipes from: " + str(filename))
+    lines = [line.rstrip('\n') for line in open(filename)]
+    calibrationUrls = []
+    index = 0
+    categories = ['breakfast', 'lunch', 'dinner']
+    currUser = [[] for x in range(len(categories))]
+    for line in lines:
+        line = str(line)
+        if line is '':
+            calibrationUrls.append(currUser)
+            break
+        elif line in categories:
+            index = categories.index(line)
+        else:
+            if currUser[index] is []:
+                currUser[index] = line
+            else:
+                currUser[index].append(line)
+
+    #inserting calibrated recipes into db
+    for userRecipes in calibrationUrls:
+        calibrationIngredients = []
+        calibrationRecipes = []
+        userPks = [[] for x in range(len(categories))]
+        userInputNames = [[] for x in range(len(categories))]
+        for i, category in enumerate(categories):
+            categoryIngredients, categoryRecipes = parseRecipes(userRecipes[i], [category])
+            insertIngredientsAndRecipes(categoryIngredients, categoryRecipes)
+            categoryPks = []
+            categoryInputNames = []
+            for r in categoryRecipes:
+                categoryPks.append(r.recipePk)
+                categoryInputNames.append(r.name)
+
+            userPks[i] = categoryPks
+            userInputNames[i] = categoryInputNames
+            calibrationRecipes.append(categoryRecipes)
+            calibrationIngredients.append(categoryIngredients)
+
+        print(userInputNames)
+        print("INPUT: " + str(userInputNames) + "\n" + "OUTPUT: " + str(generateMealPlan(userPks, 7, 1)))
+        break
 
 def scrapeAndPopulate():
     urls = getUrls()
@@ -39,6 +59,8 @@ def scrapeAndPopulate():
         ingredients, recipes = parseRecipes(categoryUrls[1], categoryUrls[0])
         insertIngredientsAndRecipes(ingredients, recipes)
 
-
-#generateCalibrationPksFromFile()
-scrapeAndPopulate()
+ans = input("Press 1 to scrape, 2 to test algorithm with input file: ")
+if ans is '1':
+    scrapeAndPopulate()
+elif ans is '2':
+    generateCalibrationPksFromFile()

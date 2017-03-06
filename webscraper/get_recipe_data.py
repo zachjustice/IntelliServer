@@ -16,12 +16,9 @@ def getRecipeData():
     disconnect(conn, cur)
     return json.loads((json.dumps(recipes, indent=2)))
 
-def getRecipeTagData():
+def getRecipeTagData(tag):
     conn, cur = connect()
-    recipes = get_all_tag_recipes(conn, 'breakfast')
+    recipes = get_all_tag_recipes(conn, tag)
     disconnect(conn, cur)
     return json.loads((json.dumps(recipes, indent=2)))
-
-
-
 

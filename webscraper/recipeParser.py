@@ -114,6 +114,7 @@ class Recipe:
         self.ingredients = ingredients
         self.recipePk = None
         self.tags = self.generateTags()
+        self.categoryTags = categoryTags
         for tag in categoryTags:
             self.tags.append(tag)
 

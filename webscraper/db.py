@@ -1,4 +1,5 @@
 import psycopg2
+import datetime
 from psycopg2.extras import NamedTupleConnection
 from psycopg2.extras import RealDictCursor
 
@@ -17,7 +18,7 @@ def disconnect(conn, cur):
 # only takes a connection since db cursors should be created/destroyed
 # with each query
 def fetchall(conn, query, data=None):
-    cur = execute(conn, query, data)
+    cur = execute(conn, query, (data,))
     results = cur.fetchall()
     cur.close()
     return results
@@ -29,7 +30,8 @@ def execute(conn, query, data=None):
             cur.execute(query)
         else:
             cur.execute(query, data)
-    except Exception:
+    except Exception as e:
+        print(e)
         print("ERROR WITH QUERY: '" + query + "'")
     return cur
 
@@ -83,7 +85,7 @@ def get_all_tag_recipes(conn, tag):
     ON r.recipe = rt.recipe
     JOIN tb_tag t
     ON rt.tag = t.tag
-    WHERE t.name = 'breakfast'
+    WHERE t.name = %s
     GROUP BY r.recipe, r.name, r.instructions, r.description, r.preparation_time
     """
 
@@ -134,7 +136,8 @@ def insertIngredient(ingredient, cur):
     ingredient.ingredientPk = cur.fetchone()[0]
 
 def insertRecipes(recipes, cur):
-    for r in recipes:
+    for i, r in enumerate(recipes):
+        print("INSERTING RECIPE " + str(i))
         insertRecipe(r, cur)
 
 def insertRecipe(r, cur):
@@ -162,4 +165,22 @@ def insertRecipeTags(recipes, cur):
 def insertRecipeTag(r, t, cur):
     query = "INSERT INTO tb_recipe_tag (recipe, tag) VALUES (%s, (SELECT tag FROM tb_tag WHERE name = %s)) ON CONFLICT ON CONSTRAINT tb_recipe_tag_pkey DO NOTHING;"""
     data = (r.recipePk, t)
+    cur.execute(query, data)
+
+def insertMealPlan(entity, recipes, day):
+    (conn, cur) = connect()
+    categories = ['breakfast', 'lunch', 'dinner']
+    start_day = day
+    for i, category in enumerate(categories):
+        meal_type = category
+        day = start_day
+        for r in recipes[i]:
+            insertMeal(entity, r[0], day, meal_type, cur)
+            day += datetime.timedelta(days=1)
+    conn.commit()
+    disconnect(conn, cur)
+
+def insertMeal(entity, recipePk, day, meal_type, cur):
+    query = """INSERT INTO tb_meal_plan (entity, recipe, eat_on, meal_type) VALUES (%s, %s, %s, %s);"""
+    data = (entity, recipePk, day, meal_type);
     cur.execute(query, data)

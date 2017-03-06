@@ -7,9 +7,9 @@ import pdb
 from selenium import webdriver
 
 def getUrls():
-    categories = [('78/breakfast-and-brunch/', ['breakfast']), ('17561/lunch/', ['lunch']), ('17562/dinner/', ['dinner']), ('80/main-dish/', ['lunch', 'dinner'])]
-    #categories = [('80/main-dish/', ['lunch', 'dinner'])]
-    numPages = 3 #try max pages from each category
+ #   categories = [('78/breakfast-and-brunch/', ['breakfast']), ('17561/lunch/', ['lunch']), ('17562/dinner/', ['dinner']), ('80/main-dish/', ['lunch', 'dinner'])]
+    categories = [('80/main-dish/', ['lunch', 'dinner'])]
+    numPages = 1000 #try max pages from each category
     allUrls = getCategoryUrls(categories, numPages)
     return allUrls
 
@@ -32,14 +32,13 @@ def getPage(categoryBase, page):
     url = base + categoryBase + "?page=" + str(page) + str("#0");
     print(str(url))
     try:
-        page = urllib2.urlopen("http://allrecipes.com").read();
+        page = urllib2.urlopen(url).read();
     except Exception as e:
         print(e)
         return None
     soup = BeautifulSoup(page, "html.parser");
 
     urlSuffixes = [];
-    #pdb.set_trace()
 
     body_content = soup.find("div", {"class": "container-content body-content"});
     grid = body_content.find("section", {"id": "grid"});
@@ -52,5 +51,4 @@ def getPage(categoryBase, page):
             urlSuffixes.append(link.get("href"));
     recipeBase = "http://allrecipes.com"
     completeUrls = [recipeBase + urlSuffix for urlSuffix in urlSuffixes if urlSuffix[:7] == "/recipe"]
-    print (completeUrls)
     return completeUrls
