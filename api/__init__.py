@@ -2,7 +2,7 @@ from flask import Flask
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import sys
-import os 
+import os
 
 dir_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 
@@ -33,7 +33,7 @@ try:
 except Exception, exception:
     sys.exit("Couldn't get database config files. Does .db_config exist?")
 
-engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=True)
+engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=False)
 Session = sessionmaker(bind=engine)
 
 import api.routes
