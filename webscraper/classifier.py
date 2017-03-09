@@ -3,15 +3,12 @@ import operator
 import math
 import random
 import numpy as np
-from get_recipe_data import getIngredientData
+from webscraper.get_recipe_data import *
+from webscraper.db import *
 from datetime import datetime
 from collections import defaultdict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from get_recipe_data import getRecipeData
-from get_recipe_data import getRecipeTagData
-from db import insertMealPlan
-from db import get_calibration_recipe_pks
 from collections import defaultdict
 from scipy import sparse
 

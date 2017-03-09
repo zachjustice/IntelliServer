@@ -176,7 +176,7 @@ class MealPlan(Base):
             'entity_fk' : self.entity_fk,
             'recipe_fk' : self.recipe_fk,
             'meal_type' : self.meal_type,
-            'eat_on' : self.eat_on
+            'eat_on' : str(self.eat_on)
         }
 
 class Ingredient(Base):

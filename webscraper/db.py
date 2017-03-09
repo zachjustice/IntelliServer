@@ -180,7 +180,7 @@ def insertMealPlan(entity, recipes, day):
         meal_type = category
         day = start_day
         for r in recipes[i]:
-            insertMeal(entity, r[0], day, meal_type, cur)
+            insertMeal(entity, r[0], str(day), meal_type, cur)
             day += datetime.timedelta(days=1)
     conn.commit()
     disconnect(conn, cur)

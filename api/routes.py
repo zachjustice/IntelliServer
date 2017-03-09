@@ -1,9 +1,10 @@
 from flask import Flask, jsonify, abort, make_response, request, g
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
-from webscraper import *
+from webscraper.classifier import *
 from api.models import *
 from api import app, Session
+import datetime
 
 my_api = Api(app) # resources are added to this object
 auth = HTTPBasicAuth()
@@ -290,7 +291,7 @@ class TagsList(Resource):
 class EntityMealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('date', required = False, type=str)
+        self.reqparse.add_argument('date', required = False, type=str, location='args')
         super(EntityMealPlans, self).__init__()
 
     @auth.login_required
@@ -304,7 +305,7 @@ class EntityMealPlans(Resource):
 
         if date is None:
             # default to current date
-            date = time.strftime("%Y-%m-%d")
+            date = str(time.strftime("%Y-%m-%d"))
 
         meal_plans = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk,  MealPlan.eat_on == date).all()
 
@@ -316,15 +317,20 @@ class EntityMealPlans(Resource):
         for meal_plan in meal_plans:
             if meal_plan.meal_type not in meal_plan_dict:
                 meal_plan_dict[meal_plan.meal_type] = []
-            meal_plan_dict[meal_plan.meal_type] = my_map_to_list(meal_plan.as_dict())
+            meal_plan_dict[meal_plan.meal_type] = meal_plan.as_dict()
 
         return meal_plan_dict
 
     @auth.login_required
     def post(self, entity_pk):
-        #call algorithm
+        #call algorithm on number of days till cron-job updates on Sunday
+        num_days = 6 - datetime.datetime.today().weekday()
+        try:
+            generateMealPlan(entity_pk, num_days)
         #return error for problem, otherwise return None
-        pass
+        except Exception as e:
+            abort(400, str(e))
+        return None
 
 class TagsList(Resource):
     def __init__(self):

@@ -1,5 +1,5 @@
 import json
-from db import connect, disconnect, get_total_ingredient_counts, get_all_recipes, get_all_tag_recipes
+from webscraper.db import connect, disconnect, get_total_ingredient_counts, get_all_recipes, get_all_tag_recipes
 
 def getIngredientData():
     conn, cur = connect()
