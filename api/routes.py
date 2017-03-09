@@ -84,23 +84,37 @@ class RecipesList(Resource):
 class EntityRecipes(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('recipe_pk', required=True, type=int, location='json')
         self.reqparse.add_argument('rating', required=False, type=int, location='json')
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
+        self.reqparse.add_argument('is_favorite', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
-        self.reqparse.add_argument('entity_pk', required=True, type=int, location='json')
         super(EntityRecipes, self).__init__()
 
     @auth.login_required
-    def post(self):
-        recipe_rating = self.reqparse.parse_args()
-        #insert using request body params
-        #return recipe rating json object
+    def post(self, entity_pk, recipe_pk):
+        session = Session()
+        params = self.reqparse.parse_args()
 
-        if( recipe_rating is None ):
-            abort( 500 )
+#        #insert using request body params
+#        #return recipe rating json object
+        if params.is_favorite is None:
+            params.is_favorite = False
+        if params.is_calibration_recipe is None:
+            params.is_calibration_recipe = False
 
-        return recipe_rating
+        entityRecipeRating = EntityRecipeRating(
+                entity_fk=entity_pk,
+                recipe_fk=recipe_pk,
+                rating=params.rating,
+                is_favorite = params.is_favorite,
+                is_calibration_recipe = params.is_calibration_recipe,
+                notes = params.notes
+                )
+
+        session.add(entityRecipeRating)
+        session.commit()
+
+        return entityRecipeRating.as_dict()
 
 class EntitiesList(Resource):
     def __init__(self):
