@@ -92,30 +92,35 @@ def get_all_tag_recipes(conn, tag):
     recipes = fetchall(conn, query, tag)
     return recipes
 
-def get_most_popular_by_tag(conn, tag):
-    query = """
-    SELECT
-        r.recipe,
-        r.name,
-        r.instructions,
-        r.description,
-        array_agg(i.ingredient) as "ingredients",
-        array_agg(i.name) as "ingredient_names"
-    FROM tb_recipe r
-    JOIN tb_ingredient_recipe ir
-    ON ir.recipe = r.recipe
-    JOIN tb_ingredient i
-    ON i.ingredient = ir.ingredient
-    JOIN tb_recipe_tag rt
-    ON r.recipe = rt.recipe
-    JOIN tb_tag t
-    ON rt.tag = t.tag
-    WHERE t.name = 'breakfast'
-    GROUP BY r.recipe, r.name, r.instructions, r.description, r.preparation_time
-    """
+def get_calibration_recipe_pks(entity):
+    categories = ['breakfast', 'lunch', 'dinner']
+    (conn, cur) = connect()
+    calibration_pks = []
+    for tag in categories:
+        calibration_pks.append(get_tag_calibration_recipe_pks(cur, entity, tag))
+    conn.commit()
+    disconnect(conn, cur)
+    print("DATABASE RETURNS: " + str(calibration_pks))
 
-    recipes = fetchall(conn, query, tag)
-    return recipes
+    return calibration_pks
+
+def get_tag_calibration_recipe_pks(cur, entity, tag):
+    query = """
+    SELECT rr.recipe FROM tb_entity_recipe_rating rr
+    JOIN tb_recipe_tag rt
+    ON rr.recipe = rt.recipe
+    JOIN tb_tag t ON rt.tag = t.tag
+    WHERE entity = %s
+    AND is_calibration_recipe = 't'
+    AND name = %s
+    GROUP BY rr.recipe
+    """
+    data = (entity, tag)
+    cur.execute(query, data)
+    res = cur.fetchall()
+    res = [int(x[0]) for x in res]
+    return res
+
 
 def insertIngredientsAndRecipes(ingredients, recipes):
     (conn, cur) = connect()
@@ -181,6 +186,6 @@ def insertMealPlan(entity, recipes, day):
     disconnect(conn, cur)
 
 def insertMeal(entity, recipePk, day, meal_type, cur):
-    query = """INSERT INTO tb_meal_plan (entity, recipe, eat_on, meal_type) VALUES (%s, %s, %s, %s);"""
+    query = """INSERT INTO tb_meal_plan (entity, recipe, eat_on, meal_type) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING;"""
     data = (entity, recipePk, day, meal_type);
     cur.execute(query, data)

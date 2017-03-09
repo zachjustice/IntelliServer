@@ -58,15 +58,14 @@ class Recipes(Resource):
 class RecipesList(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('sort_by', required=False, type=str)
-        self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool)
-        self.reqparse.add_argument('name', required=False, type=str)
+        self.reqparse.add_argument('name', required=False, type=str, location='args')
+        self.reqparse.add_argument('is_calibration_recipe', required=False, type=str, location='args')
         super(RecipesList, self).__init__()
 
     @auth.login_required
     def get(self):
-        params = self.reqparse.parse_args()
         session = Session()
+        params = self.reqparse.parse_args()
 
         if params['is_calibration_recipe'] is not None:
             if params['is_calibration_recipe']:
@@ -75,7 +74,7 @@ class RecipesList(Resource):
                 recipes = session.query(Recipe).join(RecipeTag).join(Tag).filter(Tag.name != 'calibration').all()
             return (my_map(lambda r: r.as_dict(), recipes))
         if params['name'] is not None:
-            recipes = session.query(Recipe).filter(Recipe.name.contains(params['name'])).all()
+            recipes = session.query(Recipe).filter(Recipe.name.ilike('%' + str(params['name']) + '%')).all()
             return (my_map(lambda r: r.as_dict(), recipes))
 
         recipes = session.query(Recipe).all()

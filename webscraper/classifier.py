@@ -10,14 +10,18 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from get_recipe_data import getRecipeData
 from get_recipe_data import getRecipeTagData
-from db import get_most_popular_by_tag
 from db import insertMealPlan
+from db import get_calibration_recipe_pks
 from collections import defaultdict
 from scipy import sparse
 
 #highest level method for generating a mealplan - generates a mealplan for numDays days including breakfast, lunch, and dinner
 #note: the userRecipes are expected to be a list of 3 lists - one for each mealType in the order [breakfast list], [lunch list], [dinner list]
-def generateMealPlan(userRecipes, numDays, entityPk = None):
+def generateMealPlan(entityPk, numDays, userRecipes = None):
+    #not testing, so grab input from DB
+    if userRecipes is None:
+        userRecipes = get_calibration_recipe_pks(entityPk)
+
     mealPlan = []
     #breakfast
     breakfastPks = userRecipes[0]
@@ -31,15 +35,19 @@ def generateMealPlan(userRecipes, numDays, entityPk = None):
     dinnerPks = userRecipes[2]
     mealPlan.append(generateTypedMealPlan(dinnerPks, 'dinner', numDays))
 
-    #not testing, so insert into DB
-    if entityPk is not None:
-        today = datetime.now()
-        insertMealPlan(entityPk, mealPlan, today)
+    #insert into db
+    today = datetime.now()
+    insertMealPlan(entityPk, mealPlan, today)
     return mealPlan
 
 #given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
 def generateTypedMealPlan(userRecipes, mealType, mealPlanSize = 7, calibrationThreshold = 7):
     recipes = getRecipeTagData(mealType)
+    if 12001 in recipes:
+        print("What the literal fuck")
+    store = [r['recipe'] for r in recipes]
+    print(mealType)
+    print(len(store))
     if len(userRecipes) == 0:
         userRecipes.append(random.choice(recipes)['recipe'])
     tfidfMatrix = setupTfidfMatrix(recipes)

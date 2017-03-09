@@ -50,7 +50,7 @@ def generateCalibrationPksFromFile():
             calibrationIngredients.append(categoryIngredients)
 
         print(userInputNames)
-        print("INPUT: " + str(userInputNames) + "\n" + "OUTPUT: " + str(generateMealPlan(userPks, 7, 1)))
+        print("INPUT: " + str(userInputNames) + "\n" + "OUTPUT: " + str(generateMealPlan(2, 7, userPks)))
         break
 
 def scrapeAndPopulate():
