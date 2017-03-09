@@ -76,7 +76,7 @@ class RecipesList(Resource):
             return (my_map(lambda r: r.as_dict(), recipes))
         if params['name'] is not None:
             recipes = session.query(Recipe).filter(Recipe.name.ilike('%' + str(params['name']) + '%')).all()
-            return (my_map(lambda r: r.as_dict(), recipes))
+            return my_map(lambda r: r.as_dict(), recipes)
 
         recipes = session.query(Recipe).all()
         return (my_map(lambda r: r.as_dict(), recipes))
@@ -95,8 +95,10 @@ class EntityRecipes(Resource):
         session = Session()
         params = self.reqparse.parse_args()
 
-#        #insert using request body params
-#        #return recipe rating json object
+        existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
+        if existing_entity_rating is not None: # enty exists
+            return abort(400, "Recipe already exists for user")
+
         if params.is_favorite is None:
             params.is_favorite = False
         if params.is_calibration_recipe is None:
@@ -312,10 +314,15 @@ class EntityMealPlans(Resource):
     @validate_access
     def get(self, entity_pk):
         import time
+        session = Session()
+        entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
+
+        if(entity is None):
+            abort(400, "This entity does not exist")
+
         params = self.reqparse.parse_args()
         date = params['date']
 
-        session = Session()
 
         if date is None:
             # default to current date
@@ -336,14 +343,21 @@ class EntityMealPlans(Resource):
         return meal_plan_dict
 
     @auth.login_required
+    @validate_access
     def post(self, entity_pk):
+        session = Session()
+        entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
+
+        if(entity is None):
+            abort(400, "This entity does not exist")
+
         #call algorithm on number of days till cron-job updates on Sunday
         num_days = 6 - datetime.datetime.today().weekday()
         try:
             generateMealPlan(entity_pk, num_days)
         #return error for problem, otherwise return None
         except Exception as e:
-            abort(400, str(e))
+            abort(400, "Failed to generate meal plan")
         return None
 
 class TagsList(Resource):
