@@ -51,6 +51,8 @@ class Recipes(Resource):
     def get(self, recipe_pk):
         session = Session()
         recipe = session.query(Recipe).filter_by(recipe=recipe_pk).first()
+        if recipe is None:
+            abort(400, "Recipe not found")
         return recipe.as_dict()
 
 class RecipesList(Resource):
@@ -58,6 +60,7 @@ class RecipesList(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('sort_by', required=False, type=str)
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool)
+        self.reqparse.add_argument('name', required=False, type=str)
         super(RecipesList, self).__init__()
 
     @auth.login_required
@@ -70,23 +73,29 @@ class RecipesList(Resource):
                 recipes = session.query(Recipe).join(RecipeTag).join(Tag).filter(Tag.name == 'calibration').all()
             else:
                 recipes = session.query(Recipe).join(RecipeTag).join(Tag).filter(Tag.name != 'calibration').all()
-            return map(lambda r: r.as_dict(), recipes)
+            return (my_map(lambda r: r.as_dict(), recipes))
+        if params['name'] is not None:
+            recipes = session.query(Recipe).filter(Recipe.name.contains(params['name'])).all()
+            return (my_map(lambda r: r.as_dict(), recipes))
 
         recipes = session.query(Recipe).all()
-        return map(lambda r: r.as_dict(), recipes)
+        return (my_map(lambda r: r.as_dict(), recipes))
 
-class RecipeRatings(Resource):
+class EntityRecipes(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('recipe', required=True, type=int, location='json')
-        self.reqparse.add_argument('rating', required=True, type=int, location='json')
+        self.reqparse.add_argument('recipe_pk', required=True, type=int, location='json')
+        self.reqparse.add_argument('rating', required=False, type=int, location='json')
+        self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
+        self.reqparse.add_argument('notes', required=False, type=str, location='json')
         self.reqparse.add_argument('entity_pk', required=True, type=int, location='json')
-        super(RecipeRatings, self).__init__()
+        super(EntityRecipes, self).__init__()
 
     @auth.login_required
     def post(self):
         recipe_rating = self.reqparse.parse_args()
-        recipe_rating = create_or_update_recipe_rating( recipe_rating )
+        #insert using request body params
+        #return recipe rating json object
 
         if( recipe_rating is None ):
             abort( 500 )
@@ -109,7 +118,7 @@ class EntitiesList(Resource):
         session = Session()
         entities = session.query(Entity).all()
 
-        return map( lambda e: e.as_dict(), entities )
+        return my_map(lambda e: e.as_dict(), entities)
 
     def post(self):
         session = Session()
@@ -140,7 +149,7 @@ class EntitiesList(Resource):
         entity_dict = entity.as_dict()
         entity_dict['token'] = entity.generate_auth_token(60000)
 
-        return entity_dict
+        return (entity_dict)
 
 class Entities(Resource):
     def __init__(self):
@@ -190,6 +199,7 @@ class Entities(Resource):
         if params['password'] is not None:
             if len(params['password']) < 6:
                 abort(400, "Password must be at least 6 characters.")
+
             entity.password = params['password']
 
         if params['allergies'] is not None:
@@ -208,7 +218,7 @@ class Entities(Resource):
                 if ingredient is None:
                     abort(400, "Allergy, " + str(ingredient) + ", does not exist.")
 
-                if ingredient.ingredient_pk not in map(lambda a: a.ingredient_fk, entity.allergies):
+                if ingredient.ingredient_pk not in my_map(lambda a: a.ingredient_fk, entity.allergies):
                     # if this entity doesn't have this dietary concern, add the dietary concern
                     allergy = Allergy(entity_fk = entity.entity_pk, ingredient_fk = ingredient.ingredient_pk)
                     session.add(allergy)
@@ -229,14 +239,14 @@ class Entities(Resource):
                 if tag is None:
                     abort(400, "Dietary concern tag with primary key, " + str(tag) + ", does not exist.")
 
-                if tag.tag_pk not in map(lambda t: t.tag_fk, entity.entity_tags):
+                if tag.tag_pk not in my_map(lambda t: t.tag_fk, entity.entity_tags):
                     # if this entity doesn't have this dietary concern, add the dietary concern
                     entity_tag = EntityTag(entity_fk = entity.entity_pk, tag_fk = tag.tag_pk)
                     session.add(entity_tag)
 
         session.commit()
 
-        return entity.as_dict()
+        return my_map_to_list(entity.as_dict())
 
     @auth.login_required
     @validate_access
@@ -253,7 +263,7 @@ class Entities(Resource):
         session.delete(entity)
         session.commit()
 
-        return entity.as_dict()
+        return (entity.as_dict())
 
 class Tokens(Resource):
     @auth.login_required
@@ -276,7 +286,7 @@ class TagsList(Resource):
     def get(self, tag_type_pk):
         session = Session()
         tags = session.query(Tag).filter_by(tag_type_fk = tag_type_pk).all()
-        return map(lambda t: t.as_dict(), tags)
+        return (my_map(lambda t: t.as_dict(), tags))
 
 class EntityMealPlans(Resource):
     def __init__(self):
@@ -300,32 +310,21 @@ class EntityMealPlans(Resource):
         meal_plans = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk,  MealPlan.eat_on == date).all()
 
         if meal_plans is None:
-            null
+            return None
 
         meal_plan_dict = {}
 
         for meal_plan in meal_plans:
             if meal_plan.meal_type not in meal_plan_dict:
                 meal_plan_dict[meal_plan.meal_type] = []
-            meal_plan_dict[meal_plan.meal_type] = meal_plan.as_dict()
+            meal_plan_dict[meal_plan.meal_type] = my_map_to_list(meal_plan.as_dict())
 
         return meal_plan_dict
 
+    @auth.login_required
     def post(self, entity_pk):
-        session = Session()
-        params = self.reqparse.parse_args()
-
-        ## check username
-        #existing_entity = session.query(Entity).filter(Entity.email == new_entity.email).first()
-
-        #session.add(entity)
-        #session.commit()
-
-        #g.entity = entity
-        #entity_dict = entity.as_dict()
-        #entity_dict['token'] = entity.generate_auth_token(60000)
-
-        #return entity_dict
+        #call algorithm
+        #return error for problem, otherwise return None
         pass
 
 class TagsList(Resource):
@@ -359,7 +358,7 @@ class TagsList(Resource):
         print ""
         print(tags)
         print ""
-        return map(lambda tag: tag.as_dist(), tags)
+        return my_map(lambda tag: tag.as_dist(), tags)
 '''
 
 my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
@@ -370,7 +369,7 @@ my_api.add_resource(EntityMealPlans, '/api/v2.0/entities/<int:entity_pk>/meal_pl
 
 my_api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 my_api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
-my_api.add_resource(RecipeRatings, '/api/v2.0/recipes/<int:recipe_pk>/rating', endpoint = 'recipesratings')
+my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes/<int:recipe_pk>', endpoint = 'entityrecipes')
 
 my_api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
 
