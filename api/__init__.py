@@ -16,7 +16,7 @@ app = Flask(__name__)
 try:
     lines = [line.rstrip('\n') for line in open(dir_path + '.secret_key')]
     secret_key = lines[0]
-except Exception, exception:
+except Exception as exception:
     sys.exit("Couldn't get secret key. Does .secret_key exist?")
 
 app.config['DEBUG'] = True
@@ -30,7 +30,7 @@ app.secret_key = secret_key
 try:
     lines = [line.rstrip('\n') for line in open(dir_path + '.db_config')]
     user, password, host, database = lines
-except Exception, exception:
+except Exception as exception:
     sys.exit("Couldn't get database config files. Does .db_config exist?")
 
 engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=False)

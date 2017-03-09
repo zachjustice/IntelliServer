@@ -7,6 +7,12 @@ from api import secret_key, Session
 
 Base = declarative_base()
 
+def my_map(f, l):
+    new = []
+    for i in l:
+        new.append(f(i))
+    return new
+
 class Entity(Base):
     __tablename__ = 'tb_entity'
 
@@ -27,9 +33,9 @@ class Entity(Base):
 
     def as_dict(self):
         dietary_concern_tags = filter(lambda entity_tag: entity_tag.tag.tag_type_fk == 1, self.entity_tags)
-        dietary_concern_tags = map(lambda entity_tag: entity_tag.tag.as_dict(), dietary_concern_tags)
+        dietary_concern_tags = my_map(lambda entity_tag: entity_tag.tag.name.as_dict(), dietary_concern_tags)
 
-        allergies = map(lambda allergy: allergy.ingredient.as_dict(), self.allergies)
+        allergies = my_map(lambda allergy: allergy.ingredient.name, self.allergies)
 
         return {
             'entity_pk' : self.entity_pk,
@@ -43,7 +49,7 @@ class Entity(Base):
 
     def hash_password(self, password):
         self.password = pwd_context.encrypt(password)
-        print "encrypted password", self.password
+        print ("encrypted password", self.password)
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password)
@@ -169,7 +175,8 @@ class MealPlan(Base):
             'meal_plan_pk' : self.meal_plan_pk,
             'entity_fk' : self.entity_fk,
             'recipe_fk' : self.recipe_fk,
-            'meal_type' : self.meal_type
+            'meal_type' : self.meal_type,
+            'eat_on' : self.eat_on
         }
 
 class Ingredient(Base):
@@ -181,7 +188,7 @@ class Ingredient(Base):
     allergies = relationship("Allergy", back_populates="ingredient")
 
     def as_dict(self):
-        return {
+        {
             'ingredient_pk' : self.ingredient_pk,
             'name' : self.name
         }
@@ -201,3 +208,4 @@ class Allergy(Base):
             'entity_fk': self.entity_fk,
             'ingredient_fk' : self.ingredient_fk
         }
+

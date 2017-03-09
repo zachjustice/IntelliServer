@@ -1,12 +1,22 @@
 from recipe_scrapers import scrap_me
+import urllib.request as urllib2
+import time
 import re
 
-def parseRecipes(urls):
+def scrape_data(url):
+    try:
+        return scrap_me(url)
+    except urllib2.HTTPError:
+        print("Retrying because requests exceeded")
+        time.sleep(5)
+        return scrape_data(url)
+
+def parseRecipes(urls, categoryTags):
     recipeList = []
     for url in urls:
         print ("Getting Recipe for " + str(url))
         #web-scrape
-        data = scrap_me(url)
+        data = scrape_data(url)
         recipeName = data.title()
         recipeTime = int(data.prepTime())
         recipeDescription = data.description()
@@ -19,7 +29,7 @@ def parseRecipes(urls):
         recipeIngredients = [x for x in recipeIngredients if x is not None]
 
         #storage
-        recipeList.append(Recipe(recipeName, recipeDescription, recipeInstructions, recipeTime, recipeIngredients))
+        recipeList.append(Recipe(recipeName, recipeDescription, recipeInstructions, recipeTime, recipeIngredients, categoryTags))
 
     #to store into DB
     ingredientList = findUniqueIngredients(recipeList)
@@ -56,7 +66,7 @@ def parseIngredient(string):
             quantity += (word + ' ')
         elif any(word in x for x in descWords) or any(word in x for x in adverbs):
             description += (word + ' ')
-        elif any(word in x for x in unitWords):
+        elif any(word in x for x in unitWords) and word not in unit:
             unit += word + ' '
         else:
             name += word + ' '
@@ -77,6 +87,9 @@ def parseIngredient(string):
     unit = unit.strip()
     description = description.strip()
 
+    #add full-length description
+    description = string.strip()
+
     return Ingredient(name, quantity, unit, description)
 
 def hasNumbers(string):
@@ -93,7 +106,7 @@ def findUniqueIngredients(recipeList):
     return aggregate
 
 class Recipe:
-    def __init__(self, name, description, instructions, preparationTime, ingredients):
+    def __init__(self, name, description, instructions, preparationTime, ingredients, categoryTags):
         self.name = name
         self.description = description
         self.instructions = instructions
@@ -101,6 +114,9 @@ class Recipe:
         self.ingredients = ingredients
         self.recipePk = None
         self.tags = self.generateTags()
+        self.categoryTags = categoryTags
+        for tag in categoryTags:
+            self.tags.append(tag)
 
     def generateTags(self):
         tags = {'gluten-free': ['barley', 'bread', 'bulgur', 'couscous', 'gluten', 'farina', 'flour', 'malt', 'rye', 'semolina', 'spelt', 'triticale', 'wheat', 'wheat germ'],
@@ -119,8 +135,7 @@ class Recipe:
             if notContains:
                 recipeTags.append(tag)
         if not recipeTags:
-            return None
-
+            return []
         return recipeTags
 
 

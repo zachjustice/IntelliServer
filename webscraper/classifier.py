@@ -1,18 +1,55 @@
 import json
 import operator
 import math
+import random
 import numpy as np
-from dump_recipe_and_ingredient_data import getIngredientData
+from get_recipe_data import getIngredientData
+from datetime import datetime
 from collections import defaultdict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from dump_recipe_and_ingredient_data import getRecipeData
+from get_recipe_data import getRecipeData
+from get_recipe_data import getRecipeTagData
+from db import insertMealPlan
+from db import get_calibration_recipe_pks
 from collections import defaultdict
 from scipy import sparse
 
-#highest level method - given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
-def generateMealPlan(userRecipes, mealPlanSize = 10, calibrationThreshold = 5):
-    recipes = getRecipeData()
+#highest level method for generating a mealplan - generates a mealplan for numDays days including breakfast, lunch, and dinner
+#note: the userRecipes are expected to be a list of 3 lists - one for each mealType in the order [breakfast list], [lunch list], [dinner list]
+def generateMealPlan(entityPk, numDays, userRecipes = None):
+    #not testing, so grab input from DB
+    if userRecipes is None:
+        userRecipes = get_calibration_recipe_pks(entityPk)
+
+    mealPlan = []
+    #breakfast
+    breakfastPks = userRecipes[0]
+    mealPlan.append(generateTypedMealPlan(breakfastPks, 'breakfast', numDays))
+
+    #lunch
+    lunchPks = userRecipes[1]
+    mealPlan.append(generateTypedMealPlan(lunchPks, 'lunch', numDays))
+
+    #dinner
+    dinnerPks = userRecipes[2]
+    mealPlan.append(generateTypedMealPlan(dinnerPks, 'dinner', numDays))
+
+    #insert into db
+    today = datetime.now()
+    insertMealPlan(entityPk, mealPlan, today)
+    return mealPlan
+
+#given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
+def generateTypedMealPlan(userRecipes, mealType, mealPlanSize = 7, calibrationThreshold = 7):
+    recipes = getRecipeTagData(mealType)
+    if 12001 in recipes:
+        print("What the literal fuck")
+    store = [r['recipe'] for r in recipes]
+    print(mealType)
+    print(len(store))
+    if len(userRecipes) == 0:
+        userRecipes.append(random.choice(recipes)['recipe'])
     tfidfMatrix = setupTfidfMatrix(recipes)
     matchingList = []
     for calibrationPk in userRecipes:

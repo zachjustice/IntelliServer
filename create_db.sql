@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS tb_tag_type(
 
 CREATE TABLE IF NOT EXISTS tb_tag(
     tag      SERIAL PRIMARY KEY,
-    tag_type INTEGER NOT NULL REFERENCES tb_tag_type( tag_type ),
+    tag_type INTEGER NOT NULL REFERENCES tb_tag_type( tag_type ) NOT NULL,
     name     VARCHAR(128) UNIQUE NOT NULL
 );
 
@@ -31,16 +31,16 @@ CREATE UNIQUE INDEX uniq_tag_type_name ON tb_tag(tag_type, name);
 
 CREATE TABLE IF NOT EXISTS tb_entity_tag(
     entity_tag SERIAL PRIMARY KEY,
-    entity     INTEGER NOT NULL REFERENCES tb_entity(entity),
-    tag        INTEGER NOT NULL REFERENCES tb_tag(tag)
+    entity     INTEGER NOT NULL REFERENCES tb_entity(entity) NOT NULL,
+    tag        INTEGER NOT NULL REFERENCES tb_tag(tag) NOT NULL
 );
 
 CREATE UNIQUE INDEX uniq_entity_tag ON tb_entity_tag(entity, tag);
 
 CREATE TABLE IF NOT EXISTS tb_recipe_tag(
     recipe_tag SERIAL PRIMARY KEY,
-    recipe INTEGER REFERENCES tb_recipe( recipe ),
-    tag    INTEGER REFERENCES tb_tag   ( tag    )
+    recipe INTEGER REFERENCES tb_recipe( recipe ) NOT NULL,
+    tag    INTEGER REFERENCES tb_tag   ( tag    ) NOT NULL
 );
 
 CREATE UNIQUE INDEX uniq_recipe_tag ON tb_recipe_tag(recipe, tag);
@@ -49,16 +49,16 @@ CREATE TYPE meal_type AS ENUM('breakfast', 'lunch', 'dinner');
 
 CREATE TABLE IF NOT EXISTS tb_meal_plan(
     meal_plan   SERIAL PRIMARY KEY,
-    entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
-    recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
+    entity      INTEGER NOT NULL REFERENCES tb_entity( entity ) NOT NULL,
+    recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ) NOT NULL,
     eat_on      DATE NOT NULL,
     meal_type   meal_type NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tb_entity_recipe_rating(
     entity_recipe_rating   SERIAL PRIMARY KEY,
-    entity      INTEGER NOT NULL REFERENCES tb_entity( entity ),
-    recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
+    entity      INTEGER NOT NULL REFERENCES tb_entity( entity ) NOT NULL,
+    recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ) NOT NULL,
     rating      INTEGER DEFAULT NULL,
     is_favorite BOOLEAN DEFAULT NULL,
     CONSTRAINT check_valid_rating CHECK( rating >= 0 and rating <= 5 ),
@@ -75,8 +75,8 @@ CREATE TABLE IF NOT EXISTS tb_ingredient(
 
 CREATE TABLE IF NOT EXISTS tb_ingredient_recipe(
     ingredient_recipe SERIAL PRIMARY KEY,
-    ingredient        INTEGER REFERENCES tb_ingredient( ingredient ),
-    recipe            INTEGER REFERENCES tb_recipe( recipe ),
+    ingredient        INTEGER REFERENCES tb_ingredient( ingredient ) NOT NULL,
+    recipe            INTEGER REFERENCES tb_recipe( recipe ) NOT NULL,
     quantity          VARCHAR(20) DEFAULT NULL,
     unit              VARCHAR(20) DEFAULT NULL,
     description       TEXT DEFAULT NULL,
@@ -85,8 +85,8 @@ CREATE TABLE IF NOT EXISTS tb_ingredient_recipe(
 
 CREATE TABLE IF NOT EXISTS tb_allergy(
     allergy    SERIAL PRIMARY KEY,
-    entity     INTEGER REFERENCES tb_entity(entity),
-    ingredient INTEGER REFERENCES tb_ingredient(ingredient)
+    entity     INTEGER REFERENCES tb_entity(entity) NOT NULL,
+    ingredient INTEGER REFERENCES tb_ingredient(ingredient) NOT NULL
 );
 
 CREATE UNIQUE INDEX uniq_entity_ingredient ON tb_allergy(entity, ingredient);
