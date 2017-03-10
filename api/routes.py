@@ -43,9 +43,6 @@ def validate_access(func):
         return func(*args, **kwargs)
     return decorator
 
-###################################################
-#############    Version 2      ###################
-###################################################
 class Recipes(Resource):
     @auth.login_required
     def get(self, recipe_pk):
