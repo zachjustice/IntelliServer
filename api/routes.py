@@ -3,7 +3,8 @@ from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
 from webscraper import *
 from api.models import *
-from api import app, Session
+from api import *
+import datetime
 
 my_api = Api(app) # resources are added to this object
 auth = HTTPBasicAuth()
@@ -72,7 +73,7 @@ class RecipesList(Resource):
             return (my_map(lambda r: r.as_dict(), recipes))
         if params['name'] is not None:
             recipes = session.query(Recipe).filter(Recipe.name.ilike('%' + str(params['name']) + '%')).all()
-            return (my_map(lambda r: r.as_dict(), recipes))
+            return my_map(lambda r: r.as_dict(), recipes)
 
         recipes = session.query(Recipe).all()
         return (my_map(lambda r: r.as_dict(), recipes))
@@ -80,23 +81,39 @@ class RecipesList(Resource):
 class EntityRecipes(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('recipe_pk', required=True, type=int, location='json')
         self.reqparse.add_argument('rating', required=False, type=int, location='json')
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
+        self.reqparse.add_argument('is_favorite', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
-        self.reqparse.add_argument('entity_pk', required=True, type=int, location='json')
         super(EntityRecipes, self).__init__()
 
     @auth.login_required
-    def post(self):
-        recipe_rating = self.reqparse.parse_args()
-        #insert using request body params
-        #return recipe rating json object
+    def post(self, entity_pk, recipe_pk):
+        session = Session()
+        params = self.reqparse.parse_args()
 
-        if( recipe_rating is None ):
-            abort( 500 )
+        existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
+        if existing_entity_rating is not None: # enty exists
+            return abort(400, "Recipe already exists for user")
 
-        return recipe_rating
+        if params.is_favorite is None:
+            params.is_favorite = False
+        if params.is_calibration_recipe is None:
+            params.is_calibration_recipe = False
+
+        entityRecipeRating = EntityRecipeRating(
+                entity_fk=entity_pk,
+                recipe_fk=recipe_pk,
+                rating=params.rating,
+                is_favorite = params.is_favorite,
+                is_calibration_recipe = params.is_calibration_recipe,
+                notes = params.notes
+                )
+
+        session.add(entityRecipeRating)
+        session.commit()
+
+        return entityRecipeRating.as_dict()
 
 class EntitiesList(Resource):
     def __init__(self):
@@ -143,7 +160,7 @@ class EntitiesList(Resource):
 
         g.entity = entity
         entity_dict = entity.as_dict()
-        entity_dict['token'] = entity.generate_auth_token(60000)
+        entity_dict['token'] = str(entity.generate_auth_token(60000))
 
         return (entity_dict)
 
@@ -287,21 +304,26 @@ class TagsList(Resource):
 class EntityMealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('date', required = False, type=str)
+        self.reqparse.add_argument('date', required = False, type=str, location='args')
         super(EntityMealPlans, self).__init__()
 
     @auth.login_required
     @validate_access
     def get(self, entity_pk):
         import time
+        session = Session()
+        entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
+
+        if(entity is None):
+            abort(400, "This entity does not exist")
+
         params = self.reqparse.parse_args()
         date = params['date']
 
-        session = Session()
 
         if date is None:
             # default to current date
-            date = time.strftime("%Y-%m-%d")
+            date = str(time.strftime("%Y-%m-%d"))
 
         meal_plans = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk,  MealPlan.eat_on == date).all()
 
@@ -313,15 +335,27 @@ class EntityMealPlans(Resource):
         for meal_plan in meal_plans:
             if meal_plan.meal_type not in meal_plan_dict:
                 meal_plan_dict[meal_plan.meal_type] = []
-            meal_plan_dict[meal_plan.meal_type] = my_map_to_list(meal_plan.as_dict())
+            meal_plan_dict[meal_plan.meal_type] = meal_plan.as_dict()
 
         return meal_plan_dict
 
     @auth.login_required
+    @validate_access
     def post(self, entity_pk):
-        #call algorithm
+        session = Session()
+        entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
+
+        if(entity is None):
+            abort(400, "This entity does not exist")
+
+        #call algorithm on number of days till cron-job updates on Sunday
+        num_days = 6 - datetime.datetime.today().weekday()
+        try:
+            generateMealPlan(entity_pk, num_days)
         #return error for problem, otherwise return None
-        pass
+        except Exception as e:
+            abort(400, "Failed to generate meal plan")
+        return None
 
 class TagsList(Resource):
     def __init__(self):

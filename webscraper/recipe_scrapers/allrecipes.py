@@ -33,3 +33,6 @@ class AllRecipes(AbstractScraper):
             normalize_string(instruction.get_text())
             for instruction in instructions_html
         ])
+
+    def imageUrl(self):
+        return self.soup.find(itemprop='image')['src']

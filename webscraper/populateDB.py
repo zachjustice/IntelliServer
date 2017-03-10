@@ -56,8 +56,8 @@ def generateCalibrationPksFromFile():
 def scrapeAndPopulate():
     urls = getUrls()
     for categoryUrls in urls:
-        ingredients, recipes = parseRecipes(categoryUrls[1], categoryUrls[0])
-        insertIngredientsAndRecipes(ingredients, recipes)
+        recipes = parseRecipes(categoryUrls[1], categoryUrls[0])
+        insertIngredientsAndRecipes(recipes)
 
 ans = input("Press 1 to scrape, 2 to test algorithm with input file: ")
 if ans is '1':

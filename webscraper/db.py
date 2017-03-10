@@ -1,13 +1,24 @@
 import psycopg2
 import datetime
+import os.path
 from psycopg2.extras import NamedTupleConnection
 from psycopg2.extras import RealDictCursor
 
 def connect():
     try:
-        conn=psycopg2.connect("dbname='intellichef' user='jatin1' password='super123'")
+        #TODO store password file somewhere else
+#        if os.path.isfile('.password'):
+#            f = open('.password', 'r')
+#            login = f.read().splitlines()
+#        else:
+#            print("Make sure you have a .password file with the correct authentication!")
+#            sys.exit(0)
+#
+#        conn=psycopg2.connect("dbname='intellichef' user='%s' password='%s'" % (login[0], login[1]))
+        conn=psycopg2.connect("dbname='intellichef' user='postgres' password='tB9gh2RS' host='35.185.59.20'")
         cur = conn.cursor()
-    except:
+    except Exception as e :
+        print(e)
         print ("Unable to connect to the database.")
     return (conn, cur)
 
@@ -122,10 +133,8 @@ def get_tag_calibration_recipe_pks(cur, entity, tag):
     return res
 
 
-def insertIngredientsAndRecipes(ingredients, recipes):
+def insertIngredientsAndRecipes(recipes):
     (conn, cur) = connect()
-    insertIngredients(ingredients, cur)
-    insertRecipes(recipes, cur)
     insertRecipeIngredients(recipes, cur)
     insertRecipeTags(recipes, cur)
     conn.commit()
@@ -140,20 +149,17 @@ def insertIngredient(ingredient, cur):
     cur.execute(query, [ingredient.name])
     ingredient.ingredientPk = cur.fetchone()[0]
 
-def insertRecipes(recipes, cur):
-    for i, r in enumerate(recipes):
-        print("INSERTING RECIPE " + str(i))
-        insertRecipe(r, cur)
-
 def insertRecipe(r, cur):
-    query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions) VALUES (%s, %s, %s, %s) ON CONFLICT ON CONSTRAINT tb_recipe_instructions_key DO UPDATE SET instructions = EXCLUDED.instructions returning recipe;"""
-    data = (r.name, r.description, r.preparationTime, r.instructions);
+    query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions, image_url) VALUES (%s, %s, %s, %s, %s) ON CONFLICT ON CONSTRAINT tb_recipe_instructions_key DO UPDATE SET instructions = EXCLUDED.instructions returning recipe;"""
+    data = (r.name, r.description, r.preparationTime, r.instructions, r.imageUrl);
     cur.execute(query, data)
     r.recipePk = cur.fetchone()[0];
 
 def insertRecipeIngredients(recipes, cur):
     for r in recipes:
+        insertRecipe(r, cur)
         for i in r.ingredients:
+            insertIngredient(i, cur)
             insertRecipeIngredient(r, i, cur)
 
 def insertRecipeIngredient(r, i, cur):
@@ -168,7 +174,7 @@ def insertRecipeTags(recipes, cur):
                 insertRecipeTag(r, t, cur)
 
 def insertRecipeTag(r, t, cur):
-    query = "INSERT INTO tb_recipe_tag (recipe, tag) VALUES (%s, (SELECT tag FROM tb_tag WHERE name = %s)) ON CONFLICT ON CONSTRAINT tb_recipe_tag_pkey DO NOTHING;"""
+    query = "INSERT INTO tb_recipe_tag (recipe, tag) VALUES (%s, (SELECT tag FROM tb_tag WHERE name = %s)) ON CONFLICT DO NOTHING;"""
     data = (r.recipePk, t)
     cur.execute(query, data)
 
@@ -180,7 +186,7 @@ def insertMealPlan(entity, recipes, day):
         meal_type = category
         day = start_day
         for r in recipes[i]:
-            insertMeal(entity, r[0], day, meal_type, cur)
+            insertMeal(entity, r[0], str(day), meal_type, cur)
             day += datetime.timedelta(days=1)
     conn.commit()
     disconnect(conn, cur)

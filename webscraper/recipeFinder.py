@@ -7,9 +7,8 @@ import pdb
 from selenium import webdriver
 
 def getUrls():
- #   categories = [('78/breakfast-and-brunch/', ['breakfast']), ('17561/lunch/', ['lunch']), ('17562/dinner/', ['dinner']), ('80/main-dish/', ['lunch', 'dinner'])]
-    categories = [('80/main-dish/', ['lunch', 'dinner'])]
-    numPages = 1000 #try max pages from each category
+    categories = [('78/breakfast-and-brunch/', ['breakfast']), ('17561/lunch/', ['lunch']), ('17562/dinner/', ['dinner']), ('80/main-dish/', ['lunch', 'dinner'])]
+    numPages = 1 #try max pages from each category
     allUrls = getCategoryUrls(categories, numPages)
     return allUrls
 

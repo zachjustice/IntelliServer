@@ -48,7 +48,7 @@ class Entity(Base):
         }
 
     def hash_password(self, password):
-        self.password = pwd_context.encrypt(password)
+        self.password = str(pwd_context.encrypt(password))
         print ("encrypted password", self.password)
 
     def verify_password(self, password):
@@ -158,6 +158,34 @@ class RecipeTag(Base):
      def __repr__(self):
         return "<RecipeTag(recipe=%s recipe_fk=%s, tag_fk=%s)>" % (self.recipe, self.recipe_fk, self.tag_fk)
 
+class EntityRecipeRating(Base):
+    __tablename__ = 'tb_entity_recipe_rating'
+
+    entity_recipe_rating_pk = Column("entity_recipe_rating", Integer, primary_key=True)
+    entity_fk = Column("entity", Integer, ForeignKey('tb_entity.entity'))
+    recipe_fk = Column("recipe", Integer, ForeignKey('tb_recipe.recipe'))
+    rating = Column(String)
+    is_favorite = Column(Boolean)
+    is_calibration_recipe = Column(Boolean)
+    notes = Column(String)
+#
+#    recipe = relationship("Recipe", back_populates="entity_recipe_rating")
+#    entity = relationship("Entity", back_populates="entity_recipe_rating")
+#
+    def as_dict(self):
+        return {
+            'entity_recipe_rating_pk' : self.entity_recipe_rating_pk,
+            'entity_fk' : self.entity_fk,
+            'recipe_fk' : self.recipe_fk,
+            'rating' : self.rating,
+            'is_favorite' : self.is_favorite,
+            'is_calibration_recipe' : self.is_calibration_recipe,
+            'notes' : self.notes
+        }
+
+    def __repr__(self):
+        return "<EntityRecipeRating(entity_recipe_rating ='%s' entity='%s', recipe='%s', rating='%s', is_favorite='%s', is_calibration_recipe='%s', notes='%s')>" % ( self.entity_recipe_rating_pk, self.entity_fk, self.recipe_fk, self.rating, self.is_favorite, self.is_calibration_recipe, self.notes)
+
 class MealPlan(Base):
     __tablename__ = 'tb_meal_plan'
 
@@ -176,7 +204,7 @@ class MealPlan(Base):
             'entity_fk' : self.entity_fk,
             'recipe_fk' : self.recipe_fk,
             'meal_type' : self.meal_type,
-            'eat_on' : self.eat_on
+            'eat_on' : str(self.eat_on)
         }
 
 class Ingredient(Base):
