@@ -6,18 +6,17 @@ from bs4 import BeautifulSoup
 import pdb
 from selenium import webdriver
 
-def getUrls():
+def getUrls(pages):
     categories = [('78/breakfast-and-brunch/', ['breakfast']), ('17561/lunch/', ['lunch']), ('17562/dinner/', ['dinner']), ('80/main-dish/', ['lunch', 'dinner'])]
-    numPages = 1 #try max pages from each category
-    allUrls = getCategoryUrls(categories, numPages)
+    allUrls = getCategoryUrls(categories, pages)
     return allUrls
 
 
-def getCategoryUrls(categories, numPages):
+def getCategoryUrls(categories, pages):
     allUrls = []
     for categoryBase in categories:
         s = set()
-        for i in range(numPages):
+        for i in range(pages[0], pages[1]):
             toAdd = getPage(categoryBase[0], i)
             if toAdd is None:
                 break

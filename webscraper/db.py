@@ -18,7 +18,6 @@ def connect():
         conn=psycopg2.connect("dbname='intellichef' user='postgres' password='tB9gh2RS' host='35.185.59.20'")
         cur = conn.cursor()
     except Exception as e :
-        print(e)
         print ("Unable to connect to the database.")
     return (conn, cur)
 

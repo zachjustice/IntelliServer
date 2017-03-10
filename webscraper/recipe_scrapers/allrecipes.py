@@ -35,4 +35,5 @@ class AllRecipes(AbstractScraper):
         ])
 
     def imageUrl(self):
-        return self.soup.find(itemprop='image')['src']
+        out = self.soup.find(itemprop='image')['src']
+        return out

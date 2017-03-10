@@ -54,10 +54,19 @@ def generateCalibrationPksFromFile():
         break
 
 def scrapeAndPopulate():
-    urls = getUrls()
-    for categoryUrls in urls:
-        recipes = parseRecipes(categoryUrls[1], categoryUrls[0])
-        insertIngredientsAndRecipes(recipes)
+    #page range for populating db in chunks
+    start = 0
+    stop = 150
+    stop = 5
+    pages = [(n, min(n+step, stop)) for n in xrange(start, stop, step)]
+    pages.append((150, 1000))
+
+
+    for pages in page_ranges:
+        urls = getUrls(pages)
+        for categoryUrls in urls:
+            recipes = parseRecipes(categoryUrls[1], categoryUrls[0])
+            insertIngredientsAndRecipes(recipes)
 
 ans = input("Press 1 to scrape, 2 to test algorithm with input file: ")
 if ans is '1':
