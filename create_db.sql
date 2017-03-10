@@ -56,11 +56,13 @@ CREATE TABLE IF NOT EXISTS tb_meal_plan(
 );
 
 CREATE TABLE IF NOT EXISTS tb_entity_recipe_rating(
-    entity_recipe_rating   SERIAL PRIMARY KEY,
-    entity      INTEGER NOT NULL REFERENCES tb_entity( entity ) NOT NULL,
-    recipe      INTEGER NOT NULL REFERENCES tb_recipe( recipe ) NOT NULL,
-    rating      INTEGER DEFAULT NULL,
-    is_favorite BOOLEAN DEFAULT NULL,
+    entity_recipe_rating  SERIAL PRIMARY KEY,
+    entity                INTEGER NOT NULL REFERENCES tb_entity( entity ),
+    recipe                INTEGER NOT NULL REFERENCES tb_recipe( recipe ),
+    rating                INTEGER DEFAULT NULL,
+    is_favorite           BOOLEAN DEFAULT NULL,
+    is_calibration_recipe BOOLEAN DEFAULT FALSE NOT NULL,
+    notes                 TEXT,
     CONSTRAINT check_valid_rating CHECK( rating >= 0 and rating <= 5 ),
     CONSTRAINT check_rating_or_is_favorite
                 CHECK (rating IS NOT NULL or is_favorite IS NOT NULL)
