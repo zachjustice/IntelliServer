@@ -166,6 +166,18 @@ class EntitiesList(Resource):
 
         return entity_dict
 
+# Route for getting the current entity associated with give auth credentials
+class CurrentEntity(Resource):
+    @auth.login_required
+    def get(self):
+        session = Session()
+        entity = session.query(Entity).filter_by(entity_pk=g.entity.entity_pk).first()
+
+        if(entity is None):
+            abort(400, "This entity does not exist")
+
+        return entity.as_dict()
+
 class Entities(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -364,6 +376,8 @@ my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endp
 my_api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
 my_api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
 my_api.add_resource(EntityMealPlans, '/api/v2.0/entities/<int:entity_pk>/meal_plans', endpoint = 'entitymealplans')
+
+my_api.add_resource(CurrentEntity, '/api/v2.0/entities/current', endpoint = 'currententity')
 
 my_api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 my_api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
