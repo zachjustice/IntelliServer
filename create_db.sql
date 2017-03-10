@@ -77,8 +77,8 @@ CREATE TABLE IF NOT EXISTS tb_ingredient_recipe(
     ingredient_recipe SERIAL PRIMARY KEY,
     ingredient        INTEGER REFERENCES tb_ingredient( ingredient ) NOT NULL,
     recipe            INTEGER REFERENCES tb_recipe( recipe ) NOT NULL,
-    quantity          VARCHAR(20) DEFAULT NULL,
-    unit              VARCHAR(20) DEFAULT NULL,
+    quantity          VARCHAR(128) DEFAULT NULL,
+    unit              VARCHAR(128) DEFAULT NULL,
     description       TEXT DEFAULT NULL,
     preparation_notes TEXT DEFAULT NULL
 );

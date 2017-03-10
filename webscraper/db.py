@@ -1,11 +1,19 @@
 import psycopg2
 import datetime
+import os.path
 from psycopg2.extras import NamedTupleConnection
 from psycopg2.extras import RealDictCursor
 
 def connect():
     try:
-        conn=psycopg2.connect("dbname='intellichef' user='jatin1' password='super123'")
+        if os.path.isfile('api/.password'):
+            f = open('.password', 'r')
+            login = f.read().splitlines()
+        else:
+            print("Make sure you have a .password file with the correct authentication!")
+            sys.exit(0)
+
+        conn=psycopg2.connect("dbname='intellichef' user='%s' password='%s'" % (login[0], login[1]))
         cur = conn.cursor()
     except:
         print ("Unable to connect to the database.")
