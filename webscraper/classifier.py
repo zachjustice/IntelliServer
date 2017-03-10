@@ -3,8 +3,8 @@ import operator
 import math
 import random
 import numpy as np
-from webscraper.get_recipe_data import *
-from webscraper.db import *
+from get_recipe_data import *
+from db import *
 from datetime import datetime
 from collections import defaultdict
 from sklearn.feature_extraction.text import TfidfVectorizer

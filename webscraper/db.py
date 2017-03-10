@@ -6,16 +6,19 @@ from psycopg2.extras import RealDictCursor
 
 def connect():
     try:
-        if os.path.isfile('api/.password'):
-            f = open('.password', 'r')
-            login = f.read().splitlines()
-        else:
-            print("Make sure you have a .password file with the correct authentication!")
-            sys.exit(0)
-
-        conn=psycopg2.connect("dbname='intellichef' user='%s' password='%s'" % (login[0], login[1]))
+        #TODO store password file somewhere else
+#        if os.path.isfile('.password'):
+#            f = open('.password', 'r')
+#            login = f.read().splitlines()
+#        else:
+#            print("Make sure you have a .password file with the correct authentication!")
+#            sys.exit(0)
+#
+#        conn=psycopg2.connect("dbname='intellichef' user='%s' password='%s'" % (login[0], login[1]))
+        conn=psycopg2.connect("dbname='intellichef' user='postgres' password='tB9gh2RS' host='35.185.59.20'")
         cur = conn.cursor()
-    except:
+    except Exception as e :
+        print(e)
         print ("Unable to connect to the database.")
     return (conn, cur)
 
@@ -132,8 +135,6 @@ def get_tag_calibration_recipe_pks(cur, entity, tag):
 
 def insertIngredientsAndRecipes(ingredients, recipes):
     (conn, cur) = connect()
-    insertIngredients(ingredients, cur)
-    insertRecipes(recipes, cur)
     insertRecipeIngredients(recipes, cur)
     insertRecipeTags(recipes, cur)
     conn.commit()
@@ -161,7 +162,9 @@ def insertRecipe(r, cur):
 
 def insertRecipeIngredients(recipes, cur):
     for r in recipes:
+        insertRecipe(r, cur)
         for i in r.ingredients:
+            insertIngredient(i, cur)
             insertRecipeIngredient(r, i, cur)
 
 def insertRecipeIngredient(r, i, cur):
