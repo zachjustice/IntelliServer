@@ -48,7 +48,7 @@ class Entity(Base):
         }
 
     def hash_password(self, password):
-        self.password = pwd_context.encrypt(password)
+        self.password = str(pwd_context.encrypt(password))
         print ("encrypted password", self.password)
 
     def verify_password(self, password):

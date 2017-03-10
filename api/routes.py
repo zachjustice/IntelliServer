@@ -1,9 +1,9 @@
 from flask import Flask, jsonify, abort, make_response, request, g
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
-from webscraper.classifier import *
+from webscraper import *
 from api.models import *
-from api import app, Session
+from api import *
 import datetime
 
 my_api = Api(app) # resources are added to this object
@@ -160,7 +160,7 @@ class EntitiesList(Resource):
 
         g.entity = entity
         entity_dict = entity.as_dict()
-        entity_dict['token'] = entity.generate_auth_token(60000)
+        entity_dict['token'] = str(entity.generate_auth_token(60000))
 
         return (entity_dict)
 
