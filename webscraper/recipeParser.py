@@ -22,6 +22,7 @@ def parseRecipes(urls, categoryTags):
         recipeDescription = data.description()
         recipeIngredients = data.ingredients()
         recipeInstructions = data.instructions()
+        recipeImage = data.imageUrl()
 
         #clean-up
         recipeInstructions = removeAds(recipeInstructions)
@@ -29,11 +30,11 @@ def parseRecipes(urls, categoryTags):
         recipeIngredients = [x for x in recipeIngredients if x is not None]
 
         #storage
-        recipeList.append(Recipe(recipeName, recipeDescription, recipeInstructions, recipeTime, recipeIngredients, categoryTags))
+        recipeList.append(Recipe(recipeName, recipeDescription, recipeInstructions, recipeTime, recipeIngredients, categoryTags, recipeImage))
 
     #to store into DB
-    ingredientList = findUniqueIngredients(recipeList)
-    return ingredientList, recipeList
+    #ingredientList = findUniqueIngredients(recipeList)
+    return recipeList
 
 
 def removeAds(string):
@@ -106,7 +107,7 @@ def findUniqueIngredients(recipeList):
     return aggregate
 
 class Recipe:
-    def __init__(self, name, description, instructions, preparationTime, ingredients, categoryTags):
+    def __init__(self, name, description, instructions, preparationTime, ingredients, categoryTags, imageUrl):
         self.name = name
         self.description = description
         self.instructions = instructions
@@ -115,6 +116,7 @@ class Recipe:
         self.recipePk = None
         self.tags = self.generateTags()
         self.categoryTags = categoryTags
+        self.imageUrl = imageUrl
         for tag in categoryTags:
             self.tags.append(tag)
 

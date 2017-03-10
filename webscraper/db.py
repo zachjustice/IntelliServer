@@ -133,7 +133,7 @@ def get_tag_calibration_recipe_pks(cur, entity, tag):
     return res
 
 
-def insertIngredientsAndRecipes(ingredients, recipes):
+def insertIngredientsAndRecipes(recipes):
     (conn, cur) = connect()
     insertRecipeIngredients(recipes, cur)
     insertRecipeTags(recipes, cur)
@@ -149,14 +149,9 @@ def insertIngredient(ingredient, cur):
     cur.execute(query, [ingredient.name])
     ingredient.ingredientPk = cur.fetchone()[0]
 
-def insertRecipes(recipes, cur):
-    for i, r in enumerate(recipes):
-        print("INSERTING RECIPE " + str(i))
-        insertRecipe(r, cur)
-
 def insertRecipe(r, cur):
-    query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions) VALUES (%s, %s, %s, %s) ON CONFLICT ON CONSTRAINT tb_recipe_instructions_key DO UPDATE SET instructions = EXCLUDED.instructions returning recipe;"""
-    data = (r.name, r.description, r.preparationTime, r.instructions);
+    query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions, image_url) VALUES (%s, %s, %s, %s, %s) ON CONFLICT ON CONSTRAINT tb_recipe_instructions_key DO UPDATE SET instructions = EXCLUDED.instructions returning recipe;"""
+    data = (r.name, r.description, r.preparationTime, r.instructions, r.imageUrl);
     cur.execute(query, data)
     r.recipePk = cur.fetchone()[0];
 
@@ -179,7 +174,7 @@ def insertRecipeTags(recipes, cur):
                 insertRecipeTag(r, t, cur)
 
 def insertRecipeTag(r, t, cur):
-    query = "INSERT INTO tb_recipe_tag (recipe, tag) VALUES (%s, (SELECT tag FROM tb_tag WHERE name = %s)) ON CONFLICT ON CONSTRAINT tb_recipe_tag_pkey DO NOTHING;"""
+    query = "INSERT INTO tb_recipe_tag (recipe, tag) VALUES (%s, (SELECT tag FROM tb_tag WHERE name = %s)) ON CONFLICT DO NOTHING;"""
     data = (r.recipePk, t)
     cur.execute(query, data)
 

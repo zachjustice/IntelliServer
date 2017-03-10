@@ -96,9 +96,13 @@ CREATE UNIQUE INDEX uniq_entity_ingredient ON tb_allergy(entity, ingredient);
 INSERT INTO tb_tag_type(name) VALUES ('SYSTEM');
 INSERT INTO tb_tag(tag_type, name) VALUES(1, 'calibration');
 
-INSERT INTO tb_tag_type(name) VALUES ('Dietary Concerns');
+INSERT INTO tb_tag_type(name) VALUES ('Dietary_Concerns');
+INSERT INTO tb_tag(name, tag_type) VALUES ('vegetarian', 2);
+INSERT INTO tb_tag(name, tag_type) VALUES ('gluten-free', 2);
+INSERT INTO tb_tag(name, tag_type) VALUES ('pescatarian', 2);
+INSERT INTO tb_tag(name, tag_type) VALUES ('vegan', 2);
 
-INSERT INTO tb_tag(name, tag_type) VALUES ('vegetarian', 1);
-INSERT INTO tb_tag(name, tag_type) VALUES ('gluten-free', 1);
-INSERT INTO tb_tag(name, tag_type) VALUES ('pescatarian', 1);
-INSERT INTO tb_tag(name, tag_type) VALUES ('vegan', 1);
+INSERT INTO tb_tag_type(name) VALUES ('Meal_Type');
+INSERT INTO tb_tag(name, tag_type) VALUES ('breakfast', 3);
+INSERT INTO tb_tag(name, tag_type) VALUES ('lunch', 3);
+INSERT INTO tb_tag(name, tag_type) VALUES ('dinner', 3);
