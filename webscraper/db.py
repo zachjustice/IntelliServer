@@ -1,5 +1,6 @@
 import psycopg2
 import datetime
+import json
 import os.path
 from psycopg2.extras import NamedTupleConnection
 from psycopg2.extras import RealDictCursor
@@ -57,6 +58,17 @@ def get_total_ingredient_counts(conn):
     ingredient_counts = fetchall(conn, query)
     return ingredient_counts
 
+def get_entity_pks():
+    (conn, cur) = connect()
+    query = """
+    SELECT
+        e.entity
+    FROM tb_entity e
+    """
+    entity_pks = fetchall(conn, query)
+    return entity_pks
+
+
 def get_all_recipes(conn):
     query = """
     SELECT
@@ -110,7 +122,6 @@ def get_calibration_recipe_pks(entity):
         calibration_pks.append(get_tag_calibration_recipe_pks(cur, entity, tag))
     conn.commit()
     disconnect(conn, cur)
-    print("DATABASE RETURNS: " + str(calibration_pks))
 
     return calibration_pks
 
@@ -132,52 +143,52 @@ def get_tag_calibration_recipe_pks(cur, entity, tag):
     return res
 
 
-def insertIngredientsAndRecipes(recipes):
+def insert_ingredients_and_recipes(recipes):
     (conn, cur) = connect()
-    insertRecipeIngredients(recipes, cur)
-    insertRecipeTags(recipes, cur)
+    insert_recipeIngredients(recipes, cur)
+    insert_recipeTags(recipes, cur)
     conn.commit()
     disconnect(conn, cur)
 
-def insertIngredients(ingredients, cur):
+def insert_ingredients(ingredients, cur):
     for ingredient in ingredients:
-        insertIngredient(ingredient, cur)
+        insert_ingredient(ingredient, cur)
 
-def insertIngredient(ingredient, cur):
+def insert_ingredient(ingredient, cur):
     query = "INSERT INTO tb_ingredient (name) VALUES (%s) ON CONFLICT ON CONSTRAINT tb_ingredient_name_key DO UPDATE SET name = EXCLUDED.name returning ingredient;"
     cur.execute(query, [ingredient.name])
     ingredient.ingredientPk = cur.fetchone()[0]
 
-def insertRecipe(r, cur):
+def insert_recipe(r, cur):
     query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions, image_url) VALUES (%s, %s, %s, %s, %s) ON CONFLICT ON CONSTRAINT tb_recipe_instructions_key DO UPDATE SET instructions = EXCLUDED.instructions returning recipe;"""
     data = (r.name, r.description, r.preparationTime, r.instructions, r.imageUrl);
     cur.execute(query, data)
     r.recipePk = cur.fetchone()[0];
 
-def insertRecipeIngredients(recipes, cur):
+def insert_recipeIngredients(recipes, cur):
     for r in recipes:
-        insertRecipe(r, cur)
+        insert_recipe(r, cur)
         for i in r.ingredients:
-            insertIngredient(i, cur)
-            insertRecipeIngredient(r, i, cur)
+            insert_ingredient(i, cur)
+            insert_recipeIngredient(r, i, cur)
 
-def insertRecipeIngredient(r, i, cur):
+def insert_recipeIngredient(r, i, cur):
     query = """INSERT INTO tb_ingredient_recipe (ingredient, recipe, quantity, unit, description) VALUES (%s, %s, %s, %s, %s);"""
     data = (i.ingredientPk, r.recipePk, i.quantity, i.unit, i.description);
     cur.execute(query, data)
 
-def insertRecipeTags(recipes, cur):
+def insert_recipeTags(recipes, cur):
     for r in recipes:
         if r.tags is not None:
             for t in r.tags:
-                insertRecipeTag(r, t, cur)
+                insert_recipeTag(r, t, cur)
 
-def insertRecipeTag(r, t, cur):
+def insert_recipeTag(r, t, cur):
     query = "INSERT INTO tb_recipe_tag (recipe, tag) VALUES (%s, (SELECT tag FROM tb_tag WHERE name = %s)) ON CONFLICT DO NOTHING;"""
     data = (r.recipePk, t)
     cur.execute(query, data)
 
-def insertMealPlan(entity, recipes, day):
+def insert_meal_plan(entity, recipes, day):
     (conn, cur) = connect()
     categories = ['breakfast', 'lunch', 'dinner']
     start_day = day
@@ -185,12 +196,34 @@ def insertMealPlan(entity, recipes, day):
         meal_type = category
         day = start_day
         for r in recipes[i]:
-            insertMeal(entity, r[0], str(day), meal_type, cur)
+            insert_meal(entity, r[0], str(day), meal_type, cur)
             day += datetime.timedelta(days=1)
     conn.commit()
     disconnect(conn, cur)
 
-def insertMeal(entity, recipePk, day, meal_type, cur):
+def insert_meal(entity, recipePk, day, meal_type, cur):
     query = """INSERT INTO tb_meal_plan (entity, recipe, eat_on, meal_type) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING;"""
     data = (entity, recipePk, day, meal_type);
     cur.execute(query, data)
+
+def get_ingredient_data():
+    conn, cur = connect()
+
+    ingredient_counts = get_total_ingredient_counts(conn)
+
+    disconnect(conn, cur)
+
+    return json.loads((json.dumps(ingredient_counts, indent=2)))
+
+def get_recipe_data():
+    conn, cur = connect()
+    recipes = get_all_recipes(conn)
+    disconnect(conn, cur)
+    return json.loads((json.dumps(recipes, indent=2)))
+
+def get_recipe_tag_data(tag):
+    conn, cur = connect()
+    recipes = get_all_tag_recipes(conn, tag)
+    disconnect(conn, cur)
+    return json.loads((json.dumps(recipes, indent=2)))
+

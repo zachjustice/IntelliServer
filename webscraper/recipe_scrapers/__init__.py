@@ -1,12 +1,10 @@
 import re
 
 from .allrecipes import AllRecipes
-from .epicurious import Epicurious
 
 
 SCRAPERS = {
-    AllRecipes.host(): AllRecipes,
-    Epicurious.host(): Epicurious,
+    AllRecipes.host(): AllRecipes
 }
 
 

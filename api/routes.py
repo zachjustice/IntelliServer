@@ -351,7 +351,7 @@ class EntityMealPlans(Resource):
         #call algorithm on number of days till cron-job updates on Sunday
         num_days = 6 - datetime.datetime.today().weekday()
         try:
-            generateMealPlan(entity_pk, num_days)
+            generate_meal_plan(entity_pk, num_days)
         #return error for problem, otherwise return None
         except Exception as e:
             abort(400, "Failed to generate meal plan")
