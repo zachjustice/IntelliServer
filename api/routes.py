@@ -18,7 +18,9 @@ def verify_password(username_or_token, password):
         # try to authenticate with username/password
         session = Session()
         entity = session.query(Entity).filter_by(username = username_or_token).first()
-        entities = session.query(Entity).all()
+
+        if entity is None:
+            entity = session.query(Entity).filter_by(email = username_or_token).first()
 
         if not entity or not entity.verify_password(password):
             return False
@@ -162,7 +164,19 @@ class EntitiesList(Resource):
         entity_dict = entity.as_dict()
         entity_dict['token'] = str(entity.generate_auth_token(60000))
 
-        return (entity_dict)
+        return entity_dict
+
+# Route for getting the current entity associated with give auth credentials
+class CurrentEntity(Resource):
+    @auth.login_required
+    def get(self):
+        session = Session()
+        entity = session.query(Entity).filter_by(entity_pk=g.entity.entity_pk).first()
+
+        if(entity is None):
+            abort(400, "This entity does not exist")
+
+        return entity.as_dict()
 
 class Entities(Resource):
     def __init__(self):
@@ -357,45 +371,13 @@ class EntityMealPlans(Resource):
             abort(400, "Failed to generate meal plan")
         return None
 
-class TagsList(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('tag_type_pk', required = False, type=int)
-        self.reqparse.add_argument('tag_type_name', required = False, type=str)
-        super(TagsList, self).__init__()
-
-    @auth.login_required
-    def get(self):
-        params = self.reqparse.parse_args()
-        tag_type_pk = params['tag_type_pk']
-        tag_type_name = params['tag_type_name']
-        session = Session()
-        return 'asf'
-
-'''
-        print ""
-        print "params", params
-        print ""
-
-        tags = None
-        if tag_type_pk is not None:
-            tags = session.query(Tag).filter_by(tag_type_fk = tag_type_pk).all()
-        elif tag_type_name is not None:
-            tags = session.query(Tag).filter(tag.tag_type.tag_type_pk == tag_type_pk).all()
-        else:
-            tags = session.query(Tag).all()
-
-        print ""
-        print(tags)
-        print ""
-        return my_map(lambda tag: tag.as_dist(), tags)
-'''
-
 my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
 
 my_api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
 my_api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
 my_api.add_resource(EntityMealPlans, '/api/v2.0/entities/<int:entity_pk>/meal_plans', endpoint = 'entitymealplans')
+
+my_api.add_resource(CurrentEntity, '/api/v2.0/entities/current', endpoint = 'currententity')
 
 my_api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 my_api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
