@@ -3,7 +3,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
 from sqlalchemy.orm import relationship
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 from passlib.apps import custom_app_context as pwd_context
-from api import secret_key, Session
+from api import secret_key
 
 Base = declarative_base()
 
@@ -59,7 +59,6 @@ class Entity(Base):
 
     @staticmethod
     def verify_auth_token(token):
-        session = Session()
         s = Serializer(secret_key)
 
         try:
@@ -152,7 +151,7 @@ class Recipe(Base):
 class RecipeTag(Base):
      __tablename__ = 'tb_recipe_tag'
 
-     recipe_tag = Column(Integer, primary_key=True)
+     recipe_tag_pk = Column("recipe_tag", Integer, primary_key=True)
      recipe_fk = Column("recipe", Integer, ForeignKey('tb_recipe.recipe'))
      tag_fk = Column("tag", Integer, ForeignKey('tb_tag.tag'))
 
@@ -160,7 +159,11 @@ class RecipeTag(Base):
      tag = relationship("Tag", back_populates="recipe_tags")
 
      def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        return {
+            "recipe_tag_pk": self.recipe_tag_pk,
+            "recipe_fk": self.recipe_fk,
+            "tag_fk": self.tag_fk
+        }
 
      def __repr__(self):
         return "<RecipeTag(recipe=%s recipe_fk=%s, tag_fk=%s)>" % (self.recipe, self.recipe_fk, self.tag_fk)

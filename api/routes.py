@@ -3,7 +3,7 @@ from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
 from webscraper.classifier import generate_meal_plan
 from api.models import *
-from api import *
+from api import app, session
 import datetime
 
 my_api = Api(app) # resources are added to this object
@@ -16,7 +16,6 @@ def verify_password(username_or_token, password):
 
     if entity is None:
         # try to authenticate with username/password
-        session = Session()
         entity = session.query(Entity).filter_by(username = username_or_token).first()
 
         if entity is None:
@@ -49,7 +48,6 @@ def validate_access(func):
 class Recipes(Resource):
     @auth.login_required
     def get(self, recipe_pk):
-        session = Session()
         recipe = session.query(Recipe).filter_by(recipe_pk=recipe_pk).first()
         if recipe is None:
             abort(400, "Recipe not found")
@@ -64,7 +62,6 @@ class RecipesList(Resource):
 
     @auth.login_required
     def get(self):
-        session = Session()
         params = self.reqparse.parse_args()
 
         if params['is_calibration_recipe'] is not None:
@@ -91,7 +88,6 @@ class EntityRecipes(Resource):
 
     @auth.login_required
     def post(self, entity_pk, recipe_pk):
-        session = Session()
         params = self.reqparse.parse_args()
 
         existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
@@ -130,13 +126,11 @@ class EntitiesList(Resource):
     @auth.login_required
     @validate_access
     def get(self):
-        session = Session()
         entities = session.query(Entity).all()
 
         return my_map(lambda e: e.as_dict(), entities)
 
     def post(self):
-        session = Session()
         new_entity = self.reqparse.parse_args()
 
         # check username
@@ -170,7 +164,6 @@ class EntitiesList(Resource):
 class CurrentEntity(Resource):
     @auth.login_required
     def get(self):
-        session = Session()
         entity = session.query(Entity).filter_by(entity_pk=g.entity.entity_pk).first()
 
         if(entity is None):
@@ -192,7 +185,6 @@ class Entities(Resource):
     @auth.login_required
     @validate_access
     def get(self, entity_pk):
-        session = Session()
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
 
         if(entity is None):
@@ -202,7 +194,6 @@ class Entities(Resource):
 
     @auth.login_required
     def put(self, entity_pk):
-        session = Session()
         # don't use g.entity incase the use is logged in as admin
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
 
@@ -278,7 +269,6 @@ class Entities(Resource):
     @auth.login_required
     @validate_access
     def delete(self, entity_pk):
-        session = Session()
         entity = session.query(Entity).filter_by(entity_pk = entity_pk).first()
         if entity is None: # entity doesn't exist
             return None
@@ -311,7 +301,6 @@ class TagsList(Resource):
 
     @auth.login_required
     def get(self, tag_type_pk):
-        session = Session()
         tags = session.query(Tag).filter_by(tag_type_fk = tag_type_pk).all()
         return (my_map(lambda t: t.as_dict(), tags))
 
@@ -325,7 +314,6 @@ class EntityMealPlans(Resource):
     @validate_access
     def get(self, entity_pk):
         import time
-        session = Session()
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
 
         if(entity is None):
@@ -356,7 +344,6 @@ class EntityMealPlans(Resource):
     @auth.login_required
     @validate_access
     def post(self, entity_pk):
-        session = Session()
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
 
         if(entity is None):
@@ -401,20 +388,3 @@ def method_not_allowed(e):
 def internal_error(e):
     return make_response(jsonify({'error': 'An unexpected error occured'}), 500)
 
-from contextlib import contextmanager
-
-@contextmanager
-def session_scope():
-    """Provide a transactional scope around a series of operations."""
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-
-if __name__ == "__main__":
-    with session_scope() as session:
-        app.run()

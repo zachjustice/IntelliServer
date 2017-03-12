@@ -1,9 +1,9 @@
 from flask import Flask
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import Pool, NullPool
 import sys
 import os
-
 
 dir_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 
@@ -34,8 +34,19 @@ try:
 except Exception as exception:
     sys.exit("Couldn't get database config files. Does .db_config exist?")
 
-engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=False)
+# use NullPool to avoid idle transactions on postgres
+# set autocommit to true
+engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=False, isolation_level="AUTOCOMMIT", poolclass=NullPool)
 Session = sessionmaker(bind=engine)
 session = Session()
+
+# handle close and rolling back sessions
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    engine.dispose()
+    session.close()
+    if exception and Session.is_active:
+        print(exception)
+        session.rollback()
 
 import api.routes
