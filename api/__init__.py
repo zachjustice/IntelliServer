@@ -43,8 +43,8 @@ session = Session()
 # handle close and rolling back sessions
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    engine.dispose()
     session.close()
+
     if exception and Session.is_active:
         print(exception)
         session.rollback()
