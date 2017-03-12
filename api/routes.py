@@ -363,7 +363,7 @@ class EntityMealPlans(Resource):
             abort(400, "This entity does not exist")
 
         #call algorithm on number of days till cron-job updates on Sunday
-        num_days = 6 - datetime.datetime.today().weekday()
+        num_days = 7 - datetime.datetime.today().weekday()
         try:
             generate_meal_plan(entity_pk, num_days)
         #return error for problem, otherwise return None
