@@ -66,8 +66,10 @@ def scrape_and_populate():
             recipes = parse_recipes(categoryUrls[1], categoryUrls[0])
             insert_ingredients_and_recipes(recipes)
 
-ans = input("Press 1 to scrape, 2 to test algorithm with input file: ")
-if ans is '1':
-    scrape_and_populate()
-elif ans is '2':
-    generate_calibration_pks_from_file()
+#ans = input("Press 1 to scrape, 2 to test algorithm with input file: ")
+#if ans is '1':
+#    scrape_and_populate()
+#elif ans is '2':
+#    generate_calibration_pks_from_file()
+
+scrapeAndPopulate()

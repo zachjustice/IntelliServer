@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, abort, make_response, request, g
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
-from webscraper import *
+#from webscraper import *
 from api.models import *
 from api import *
 import datetime
