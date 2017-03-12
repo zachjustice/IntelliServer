@@ -50,7 +50,7 @@ class Recipes(Resource):
     @auth.login_required
     def get(self, recipe_pk):
         session = Session()
-        recipe = session.query(Recipe).filter_by(recipe=recipe_pk).first()
+        recipe = session.query(Recipe).filter_by(recipe_pk=recipe_pk).first()
         if recipe is None:
             abort(400, "Recipe not found")
         return recipe.as_dict()
