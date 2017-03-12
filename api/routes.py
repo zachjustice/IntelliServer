@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, abort, make_response, request, g
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
-#from webscraper import *
+from webscraper.classifier import generate_meal_plan
 from api.models import *
 from api import *
 import datetime
@@ -50,7 +50,7 @@ class Recipes(Resource):
     @auth.login_required
     def get(self, recipe_pk):
         session = Session()
-        recipe = session.query(Recipe).filter_by(recipe=recipe_pk).first()
+        recipe = session.query(Recipe).filter_by(recipe_pk=recipe_pk).first()
         if recipe is None:
             abort(400, "Recipe not found")
         return recipe.as_dict()
@@ -401,5 +401,20 @@ def method_not_allowed(e):
 def internal_error(e):
     return make_response(jsonify({'error': 'An unexpected error occured'}), 500)
 
+from contextlib import contextmanager
+
+@contextmanager
+def session_scope():
+    """Provide a transactional scope around a series of operations."""
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
 if __name__ == "__main__":
-    app.run()
+    with session_scope() as session:
+        app.run()

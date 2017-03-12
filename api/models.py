@@ -126,7 +126,7 @@ class Tag(Base):
 class Recipe(Base):
      __tablename__ = 'tb_recipe'
 
-     recipe = Column(Integer, primary_key=True)
+     recipe_pk = Column("recipe", Integer, primary_key=True)
      name = Column(String)
      instructions = Column(String)
      description = Column(String)
@@ -140,7 +140,14 @@ class Recipe(Base):
         return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s', image_url = '%s')>" % ( self.recipe, self.name, self.description, self.preparation_time, self.image_url)
 
      def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        return {
+            "recipe_pk" : self.recipe_pk,
+            "name": self.name,
+            "instructions":  self.instructions,
+            "description": self.description,
+            "preparation_time": self.preparation_time,
+            "image_url": self.image_url
+        }
 
 class RecipeTag(Base):
      __tablename__ = 'tb_recipe_tag'
@@ -199,13 +206,15 @@ class MealPlan(Base):
     entity = relationship("Entity", back_populates="meal_plans")
 
     def as_dict(self):
-        return {
+        meal_plan = {
             'meal_plan_pk' : self.meal_plan_pk,
             'entity_fk' : self.entity_fk,
             'recipe_fk' : self.recipe_fk,
             'meal_type' : self.meal_type,
             'eat_on' : str(self.eat_on)
         }
+        meal_plan.update(self.recipe.as_dict())
+        return meal_plan
 
 class Ingredient(Base):
     __tablename__ = 'tb_ingredient'

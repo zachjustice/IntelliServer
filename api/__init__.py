@@ -36,5 +36,6 @@ except Exception as exception:
 
 engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=False)
 Session = sessionmaker(bind=engine)
+session = Session()
 
 import api.routes
