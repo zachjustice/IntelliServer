@@ -59,7 +59,7 @@ class RecipesList(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('name', required=False, type=str, location='args')
-        self.reqparse.add_argument('is_calibration_recipe', required=False, type=str, location='args')
+        self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='args')
         super(RecipesList, self).__init__()
 
     @auth.login_required

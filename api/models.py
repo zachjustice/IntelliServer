@@ -132,12 +132,13 @@ class Recipe(Base):
      instructions = Column(String)
      description = Column(String)
      preparation_time = Column(Integer)
+     image_url = Column(String)
 
      meal_plans = relationship("MealPlan", back_populates="recipe")
      recipe_tags = relationship("RecipeTag", back_populates="recipe")
 
      def __repr__(self):
-        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s')>" % ( self.recipe, self.name, self.description, self.preparation_time)
+        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s', image_url = '%s')>" % ( self.recipe, self.name, self.description, self.preparation_time, self.image_url)
 
      def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
