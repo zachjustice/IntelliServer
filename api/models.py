@@ -168,9 +168,9 @@ class IngredientRecipe(Base):
 
      def as_dict(self):
         return {
-            "ingredient_recipe_pk": self.ingredient_recipe_pk,
-            "recipe_fk": self.recipe_fk,
-            "ingredient_fk": self.ingredient_fk,
+            #"ingredient_recipe_pk": self.ingredient_recipe_pk,
+            #"recipe_fk": self.recipe_fk,
+            #"ingredient_fk": self.ingredient_fk,
             "ingredient": self.ingredient.name,
             "description": self.description
         }
