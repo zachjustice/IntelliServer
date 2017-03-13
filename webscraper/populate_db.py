@@ -56,9 +56,9 @@ def scrape_and_populate():
     #page range for populating db in chunks
     start = 0
     stop = 150
-    stop = 5
-    #page_ranges = [(n, min(n+step, stop)) for n in xrange(start, stop, step)]
-    #page_ranges.append((150, 1000))
+    step = 5
+    page_ranges = [(n, min(n+step, stop)) for n in range(start, stop, step)]
+    page_ranges.append((150, 1000))
     page_ranges = [(90, 91)]
     for pages in page_ranges:
         urls = get_urls(pages)
