@@ -322,7 +322,6 @@ class EntityMealPlans(Resource):
         params = self.reqparse.parse_args()
         date = params['date']
 
-
         if date is None:
             # default to current date
             date = str(time.strftime("%Y-%m-%d"))
@@ -356,7 +355,7 @@ class EntityMealPlans(Resource):
         #return error for problem, otherwise return None
         except Exception as e:
             abort(400, "Failed to generate meal plan")
-        return None
+        return {"message": "generated meal plan."}
 
 my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
 
