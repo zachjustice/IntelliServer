@@ -72,4 +72,4 @@ def scrape_and_populate():
 #elif ans is '2':
 #    generate_calibration_pks_from_file()
 
-scrapeAndPopulate()
+scrape_and_populate()

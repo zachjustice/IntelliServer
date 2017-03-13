@@ -25,7 +25,7 @@ def parse_recipes(urls, categoryTags):
         recipeImage = data.imageUrl()
 
         #clean-up
-        recipeInstructions = remove_ads(recipeInstructions)
+        recipeInstructions =  '\n'.join([remove_ads(i) for i in recipeInstructions.split('\n')])
         recipeIngredients = [parse_ingredient(remove_ads(i)) for i in recipeIngredients]
         recipeIngredients = [x for x in recipeIngredients if x is not None]
 
