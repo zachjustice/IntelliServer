@@ -134,19 +134,49 @@ class Recipe(Base):
 
      meal_plans = relationship("MealPlan", back_populates="recipe")
      recipe_tags = relationship("RecipeTag", back_populates="recipe")
+     ingredient_recipe = relationship("IngredientRecipe", back_populates="recipe")
+
 
      def __repr__(self):
-        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s', image_url = '%s')>" % ( self.recipe, self.name, self.description, self.preparation_time, self.image_url)
+        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s', image_url = '%s')>" % ( self.recipe_pk, self.name, self.description, self.preparation_time, self.image_url)
 
      def as_dict(self):
-        return {
+         recipe_pks = my_map(lambda r: r.ingredient_fk, self.ingredient_recipe)
+         print(self.recipe_pk)
+         ingredients = filter(lambda ingredient_recipe: ingredient_recipe.recipe_fk == self.recipe_pk, self.ingredient_recipe)
+         ingredients = my_map(lambda ingredient_recipe: ingredient_recipe.as_dict(), ingredients)
+         return {
             "recipe_pk" : self.recipe_pk,
             "name": self.name,
             "instructions":  self.instructions,
             "description": self.description,
             "preparation_time": self.preparation_time,
-            "image_url": self.image_url
+            "image_url": self.image_url,
+            "ingredients" : ingredients
+            }
+
+class IngredientRecipe(Base):
+     __tablename__ = 'tb_ingredient_recipe'
+
+     ingredient_recipe_pk = Column("ingredient_recipe", Integer, primary_key=True)
+     recipe_fk = Column("recipe", Integer, ForeignKey('tb_recipe.recipe'))
+     ingredient_fk = Column("ingredient", Integer, ForeignKey('tb_ingredient.ingredient'))
+     description = Column("description", String)
+
+     recipe = relationship("Recipe", back_populates="ingredient_recipe")
+     ingredient = relationship("Ingredient", back_populates="ingredient_recipe")
+
+     def as_dict(self):
+        return {
+            "ingredient_recipe_pk": self.ingredient_recipe_pk,
+            "recipe_fk": self.recipe_fk,
+            "ingredient_fk": self.ingredient_fk,
+            "ingredient": self.ingredient.name,
+            "description": self.description
         }
+
+     def __repr__(self):
+        return "<IngredientRecipe(recipe =%s, ingredient=%s recipe_fk=%s, ingredient_fk=%s, description=%s)>" % (self.recipe, self.ingredient, self.recipe_fk, self.ingredient_fk, self.description)
 
 class RecipeTag(Base):
      __tablename__ = 'tb_recipe_tag'
@@ -226,6 +256,7 @@ class Ingredient(Base):
     name = Column('name', String)
 
     allergies = relationship("Allergy", back_populates="ingredient")
+    ingredient_recipe = relationship("IngredientRecipe", back_populates="ingredient")
 
     def as_dict(self):
         {
