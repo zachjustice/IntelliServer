@@ -142,7 +142,6 @@ class Recipe(Base):
 
      def as_dict(self):
          recipe_pks = my_map(lambda r: r.ingredient_fk, self.ingredient_recipe)
-         print(self.recipe_pk)
          ingredients = filter(lambda ingredient_recipe: ingredient_recipe.recipe_fk == self.recipe_pk, self.ingredient_recipe)
          ingredients = my_map(lambda ingredient_recipe: ingredient_recipe.as_dict(), ingredients)
          return {
