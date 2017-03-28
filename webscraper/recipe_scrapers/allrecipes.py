@@ -38,3 +38,24 @@ class AllRecipes(AbstractScraper):
     def imageUrl(self):
         out = self.soup.find(itemprop='image')['src']
         return out
+
+    def nutrition_info(self):
+        nutrition_dict = {}
+        servings = self.soup.find(itemprop='recipeYield')['content']
+        nutrition_dict['servings'] = str(servings)
+        calories = self.soup.find(itemprop='calories').get_text()
+        nutrition_dict['calories'] = str(calories)
+        fat = self.soup.find(itemprop='fatContent').get_text()
+        nutrition_dict['fat'] = str(fat)
+        protein = self.soup.find(itemprop='proteinContent').get_text()
+        nutrition_dict['protein'] = str(protein)
+        cholesterol = self.soup.find(itemprop='cholesterolContent').get_text()
+        nutrition_dict['cholesterol'] = str(cholesterol)
+        sodium = self.soup.find(itemprop='sodiumContent').get_text()
+        nutrition_dict['sodium'] = str(sodium)
+        carbs = self.soup.find(itemprop='carbohydrateContent').get_text()
+        nutrition_dict['carbs'] = str(carbs)
+        return nutrition_dict
+
+
+

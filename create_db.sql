@@ -13,7 +13,15 @@ CREATE TABLE IF NOT EXISTS tb_recipe(
     name             VARCHAR(128) NOT NULL,
     instructions     TEXT UNIQUE NOT NULL,
     description      TEXT NOT NULL,
-    preparation_time INT NOT NULL
+    preparation_time INT NOT NULL,
+    image_url        TEXT NOT NULL,
+    serving_count    TEXT NOT NULL,
+    calories         TEXT NOT NULL,
+    fat              TEXT NOT NULL,
+    protein          TEXT NOT NULL,
+    carbs            TEXT NOT NULL,
+    cholesterol      TEXT NOT NULL,
+    sodium           TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tb_tag_type(
