@@ -35,3 +35,6 @@ class AbstractScraper():
 
     def instructions(self):
         raise NotImplementedError("This should be implemented.")
+
+    def nutrition_info(self):
+        raise NotImplementedError("This should be implemented.")

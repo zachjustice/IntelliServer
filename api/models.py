@@ -132,15 +132,34 @@ class Recipe(Base):
      preparation_time = Column(Integer)
      image_url = Column(String)
 
+     #nutrition info
+     serving_count = Column(String)
+     calories = Column(String)
+     fat = Column(String)
+     protein = Column(String)
+     carbs = Column(String)
+     cholesterol = Column(String)
+     sodium = Column(String)
+
+     nutrition_info = {}
+
      meal_plans = relationship("MealPlan", back_populates="recipe")
      recipe_tags = relationship("RecipeTag", back_populates="recipe")
      ingredient_recipe = relationship("IngredientRecipe", back_populates="recipe")
 
 
      def __repr__(self):
-        return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s', image_url = '%s')>" % ( self.recipe_pk, self.name, self.description, self.preparation_time, self.image_url)
+         return "<Recipe(recipe ='%s' name='%s', description='%s', preparation_time='%s', image_url = '%s', nutrition_info = '%s')>" % ( self.recipe_pk,
+                self.name, self.description, self.preparation_time, self.image_url, self.nutrition_info)
 
      def as_dict(self):
+         self.nutrition_info['serving_count'] = self.serving_count
+         self.nutrition_info['calories'] = self.calories
+         self.nutrition_info['protein'] = self.protein
+         self.nutrition_info['carbs'] = self.carbs
+         self.nutrition_info['cholesterol'] = self.cholesterol
+         self.nutrition_info['sodium'] = self.sodium
+
          recipe_pks = my_map(lambda r: r.ingredient_fk, self.ingredient_recipe)
          ingredients = filter(lambda ingredient_recipe: ingredient_recipe.recipe_fk == self.recipe_pk, self.ingredient_recipe)
          ingredients = my_map(lambda ingredient_recipe: ingredient_recipe.as_dict(), ingredients)
@@ -151,7 +170,8 @@ class Recipe(Base):
             "description": self.description,
             "preparation_time": self.preparation_time,
             "image_url": self.image_url,
-            "ingredients" : ingredients
+            "ingredients" : ingredients,
+            "nutrition_info" : self.nutrition_info
             }
 
 class IngredientRecipe(Base):

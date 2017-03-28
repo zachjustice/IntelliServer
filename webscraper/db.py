@@ -160,8 +160,8 @@ def insert_ingredient(ingredient, cur):
     ingredient.ingredientPk = cur.fetchone()[0]
 
 def insert_recipe(r, cur):
-    query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions, image_url) VALUES (%s, %s, %s, %s, %s) ON CONFLICT ON CONSTRAINT tb_recipe_instructions_key DO UPDATE SET instructions = EXCLUDED.instructions returning recipe;"""
-    data = (r.name, r.description, r.preparationTime, r.instructions, r.imageUrl);
+    query = """INSERT INTO tb_recipe (name, description,preparation_time,instructions, image_url, serving_count, calories, fat, protein, carbs, cholesterol, sodium) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT ON CONSTRAINT tb_recipe_instructions_key DO UPDATE SET instructions = EXCLUDED.instructions returning recipe;"""
+    data = (r.name, r.description, r.preparationTime, r.instructions, r.imageUrl, r.nutrition_info['servings'], r.nutrition_info['calories'], r.nutrition_info['fat'], r.nutrition_info['protein'], r.nutrition_info['carbs'], r.nutrition_info['cholesterol'], r.nutrition_info['sodium']);
     cur.execute(query, data)
     r.recipePk = cur.fetchone()[0];
 
