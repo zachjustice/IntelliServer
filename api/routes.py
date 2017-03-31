@@ -87,12 +87,35 @@ class EntityRecipes(Resource):
         super(EntityRecipes, self).__init__()
 
     @auth.login_required
+    @validate_access
+    def put(self, entity_pk, recipe_pk):
+        params = self.reqparse.parse_args()
+
+        entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
+        if entity_rating is None: # enty doesn't exist
+            return abort(400, "Recipe rating doesn't exist for user")
+
+        if params.rating is not None:
+            entity_rating.rating = params.rating
+        if params.is_favorite is not None:
+            entity_rating.is_favorite = params.is_favorite
+        if params.is_calibration_recipe is not None:
+            entity_rating.is_calibration_recipe = params.is_calibration_recipe
+        if params.notes is not None:
+            entity_rating.notes = params.notes
+
+        session.commit()
+
+        return entityRecipeRating.as_dict()
+
+    @auth.login_required
+    @validate_access
     def post(self, entity_pk, recipe_pk):
         params = self.reqparse.parse_args()
 
         existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
         if existing_entity_rating is not None: # enty exists
-            return abort(400, "Recipe already exists for user")
+            return abort(400, "Recipe rating already exists for user")
 
         if params.is_favorite is None:
             params.is_favorite = False
@@ -106,7 +129,7 @@ class EntityRecipes(Resource):
                 is_favorite = params.is_favorite,
                 is_calibration_recipe = params.is_calibration_recipe,
                 notes = params.notes
-                )
+        )
 
         session.add(entityRecipeRating)
         session.commit()
@@ -308,6 +331,8 @@ class EntityMealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('date', required = False, type=str, location='args')
+        self.reqparse.add_argument('start_date', required = False, type=str, location='args')
+        self.reqparse.add_argument('end_date', required = False, type=str, location='args')
         super(EntityMealPlans, self).__init__()
 
     @auth.login_required
@@ -321,14 +346,19 @@ class EntityMealPlans(Resource):
 
         params = self.reqparse.parse_args()
         date = params['date']
+        start_date = params['start_date']
+        end_date = params['end_date']
+        meal_plans_query = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk)
 
+        if start_date is not None and end_date is not None:
+            meal_plans_query = meal_plans_query.filter(MealPlan.eat_on >= start_date, MealPlan.eat_on <= end_date)
+        else:
+            # default to grabbing the current / given date
+            if date is None:
+                date = str(time.strftime("%Y-%m-%d"))
+            meal_plans_query = meal_plans_query.filter(MealPlan.eat_on == date).all()
 
-        if date is None:
-            # default to current date
-            date = str(time.strftime("%Y-%m-%d"))
-
-        meal_plans = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk,  MealPlan.eat_on == date).all()
-
+        meal_plans = meal_plans_query.all()
         if meal_plans is None:
             return None
 

@@ -204,8 +204,8 @@ class EntityRecipeRating(Base):
     entity_fk = Column("entity", Integer, ForeignKey('tb_entity.entity'))
     recipe_fk = Column("recipe", Integer, ForeignKey('tb_recipe.recipe'))
     rating = Column(String)
-    is_favorite = Column(Boolean)
-    is_calibration_recipe = Column(Boolean)
+    is_favorite = Column(Boolean, default=False)
+    is_calibration_recipe = Column(Boolean, default=False)
     notes = Column(String)
 #
 #    recipe = relationship("Recipe", back_populates="entity_recipe_rating")
