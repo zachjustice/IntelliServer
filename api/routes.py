@@ -357,17 +357,18 @@ class EntityMealPlans(Resource):
             abort(400, "This entity does not exist")
 
         params = self.reqparse.parse_args()
+        date = params['date']
         start_date = params['start_date']
         end_date = params['end_date']
         meal_plans_query = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk)
 
         if start_date is not None and end_date is not None:
-            meal_plans_query = meal_plans_query.filter(MealPlan.eat_on >= start_date, MealPlan.eat_on <= end_date)
+            meal_plans_query = meal_plans_query.filter(MealPlan.eat_on.between(start_date, end_date))
         else:
             # default to grabbing the current / given date
             if date is None:
                 date = str(time.strftime("%Y-%m-%d"))
-            meal_plans_query = meal_plans_query.filter(MealPlan.eat_on == date).all()
+            meal_plans_query = meal_plans_query.filter(MealPlan.eat_on == date)
 
         meal_plans = meal_plans_query.all()
         if meal_plans is None:
@@ -375,11 +376,12 @@ class EntityMealPlans(Resource):
 
         meal_plan_dict = {}
         for meal_plan in meal_plans:
-            if meal_plan.eat_on not in meal_plan_dict:
-                meal_plan_dict[meal_plan.eat_on] = {}
-            if meal_plan.meal_type not in meal_plan_dict[meal_plan.eat_on]:
-                meal_plan_dict[meal_plan.eat_on][meal_plan.meal_type] = []
-            meal_plan_dict[meal_plan.eat_on][meal_plan.meal_type] = meal_plan.as_dict()
+            eat_on = str(meal_plan.eat_on)
+            if eat_on not in meal_plan_dict:
+                meal_plan_dict[eat_on] = {}
+            if meal_plan.meal_type not in meal_plan_dict[eat_on]:
+                meal_plan_dict[eat_on][meal_plan.meal_type] = []
+            meal_plan_dict[eat_on][meal_plan.meal_type] = meal_plan.as_dict()
 
         # if there's only one date don't index by date
         # just return the breakfast, lunch, and dinner keys
