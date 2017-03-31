@@ -57,9 +57,11 @@ def scrape_and_populate():
     start = 0
     stop = 150
     step = 5
-    page_ranges = [(n, min(n+step, stop)) for n in range(start, stop, step)]
-    page_ranges.append((150, 1000))
-    page_ranges = [(90, 91)]
+    page_ranges = [(0, 1)]
+    #page_ranges = [(n, min(n+step, stop)) for n in range(start, stop, step)]
+    #uncomment for last section only (lunch/dinner meals)
+    #page_ranges = []
+    #page_ranges.append((150, 1000))
     for pages in page_ranges:
         urls = get_urls(pages)
         for categoryUrls in urls:

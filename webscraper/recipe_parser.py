@@ -23,6 +23,7 @@ def parse_recipes(urls, categoryTags):
         recipeIngredients = data.ingredients()
         recipeInstructions = data.instructions()
         recipeImage = data.imageUrl()
+        recipeNutrition = data.nutrition_info()
 
         #clean-up
         recipeInstructions =  '\n'.join([remove_ads(i) for i in recipeInstructions.split('\n')])
@@ -30,10 +31,8 @@ def parse_recipes(urls, categoryTags):
         recipeIngredients = [x for x in recipeIngredients if x is not None]
 
         #storage
-        recipeList.append(Recipe(recipeName, recipeDescription, recipeInstructions, recipeTime, recipeIngredients, categoryTags, recipeImage))
+        recipeList.append(Recipe(recipeName, recipeDescription, recipeInstructions, recipeTime, recipeIngredients, categoryTags, recipeImage, recipeNutrition))
 
-    #to store into DB
-    #ingredientList = find_unique_ingredients(recipeList)
     return recipeList
 
 
@@ -107,7 +106,7 @@ def find_unique_ingredients(recipeList):
     return aggregate
 
 class Recipe:
-    def __init__(self, name, description, instructions, preparationTime, ingredients, categoryTags, imageUrl):
+    def __init__(self, name, description, instructions, preparationTime, ingredients, categoryTags, imageUrl, nutrition_info):
         self.name = name
         self.description = description
         self.instructions = instructions
@@ -117,6 +116,7 @@ class Recipe:
         self.tags = self.generate_tags()
         self.categoryTags = categoryTags
         self.imageUrl = imageUrl
+        self.nutrition_info = nutrition_info
         for tag in categoryTags:
             self.tags.append(tag)
 
