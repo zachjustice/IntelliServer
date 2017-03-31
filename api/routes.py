@@ -58,23 +58,34 @@ class RecipesList(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('name', required=False, type=str, location='args')
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='args')
+        self.reqparse.add_argument('page', required=False, type=int, location='args')
+        self.reqparse.add_argument('page_size', required=False, type=int, location='args')
         super(RecipesList, self).__init__()
 
     @auth.login_required
     def get(self):
         params = self.reqparse.parse_args()
+        query = session.query(Recipe)
 
         if params['is_calibration_recipe'] is not None:
+            query = query.join(RecipeTag).join(Tag)
             if params['is_calibration_recipe']:
-                recipes = session.query(Recipe).join(RecipeTag).join(Tag).filter(Tag.name == 'calibration').all()
+                query = query.filter(Tag.name == 'calibration')
             else:
-                recipes = session.query(Recipe).join(RecipeTag).join(Tag).filter(Tag.name != 'calibration').all()
-            return (my_map(lambda r: r.as_dict(), recipes))
-        if params['name'] is not None:
-            recipes = session.query(Recipe).filter(Recipe.name.ilike('%' + str(params['name']) + '%')).all()
-            return my_map(lambda r: r.as_dict(), recipes)
+                query = query.filter(Tag.name != 'calibration')
 
-        recipes = session.query(Recipe).all()
+        if params['name'] is not None:
+            query = query.filter(Recipe.name.ilike('%' + str(params['name']) + '%'))
+
+        # limit and offset results after all other query operations
+        if params['page'] is not None and params['page_size'] is not None:
+            page = params['page']
+            page_size = params['page_size']
+
+            query = query.limit(page_size)
+            query = query.offset(page * page_size)
+
+        recipes = query.all()
         return (my_map(lambda r: r.as_dict(), recipes))
 
 class EntityRecipes(Resource):
@@ -308,6 +319,7 @@ class EntityMealPlans(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('date', required = False, type=str, location='args')
+        self.reqparse.add_argument('recipe_pk', required = False, type=str, location='args')
         super(EntityMealPlans, self).__init__()
 
     @auth.login_required
@@ -357,11 +369,35 @@ class EntityMealPlans(Resource):
             abort(400, "Failed to generate meal plan")
         return {"message": "generated meal plan."}
 
+class MealPlans(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('recipe_pk', required = True, type=int, location='json')
+        super(MealPlans, self).__init__()
+
+    @auth.login_required
+    def put(self, meal_plan_pk):
+        meal_plan = session.query(MealPlan).filter_by(meal_plan_pk=meal_plan_pk).first()
+        if meal_plan is None:
+            abort(400, "Meal plan " + str(meal_plan_pk) + " doesn't exist")
+        if meal_plan.entity_fk != g.entity.entity_pk and not g.entity.is_admin:
+            abort(400, "User doesn't own this meal plan.")
+
+        params = self.reqparse.parse_args()
+        recipe_pk = params['recipe_pk']
+
+        meal_plan.recipe_fk = recipe_pk 
+        session.commit()
+
+        return meal_plan.as_dict()
+
 my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
 
 my_api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
 my_api.add_resource(Entities, '/api/v2.0/entities/<int:entity_pk>', endpoint = 'entities')
 my_api.add_resource(EntityMealPlans, '/api/v2.0/entities/<int:entity_pk>/meal_plans', endpoint = 'entitymealplans')
+
+my_api.add_resource(MealPlans, '/api/v2.0/meal_plans/<int:meal_plan_pk>', endpoint = 'mealplans')
 
 my_api.add_resource(CurrentEntity, '/api/v2.0/entities/current', endpoint = 'currententity')
 
