@@ -16,31 +16,35 @@ from scipy import sparse
 
 #highest level method for generating a mealplan - generates a mealplan for numDays days including breakfast, lunch, and dinner
 #note: the userRecipes are expected to be a list of 3 lists - one for each mealType in the order [breakfast list], [lunch list], [dinner list]
-def generate_meal_plan(entityPk, numDays, userRecipes = None):
+def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
     #not testing, so grab input from DB
     if userRecipes is None:
         userRecipes = get_calibration_recipe_pks(entityPk)
 
     mealPlan = []
+    duplicates = []
     #breakfast
     breakfastPks = userRecipes[0]
-    mealPlan.append(generate_typed_meal_plan(breakfastPks, 'breakfast', numDays))
+    mealPlan.append(generate_typed_meal_plan(breakfastPks, 'breakfast', numDays, duplicates))
 
     #lunch
     lunchPks = userRecipes[1]
-    mealPlan.append(generate_typed_meal_plan(lunchPks, 'lunch', numDays))
+    mealPlan.append(generate_typed_meal_plan(lunchPks, 'lunch', numDays, duplicates))
+    print(duplicates)
 
     #dinner
     dinnerPks = userRecipes[2]
-    mealPlan.append(generate_typed_meal_plan(dinnerPks, 'dinner', numDays))
+    mealPlan.append(generate_typed_meal_plan(dinnerPks, 'dinner', numDays, duplicates))
+    print(duplicates)
 
     #insert into db
     today = datetime.now()
+    today -= timedelta(timeDelta) #testing parameter, defaults no affect
     insert_meal_plan(entityPk, mealPlan, today)
     return mealPlan
 
 #given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
-def generate_typed_meal_plan(userRecipes, mealType, mealPlanSize = 7, calibrationThreshold = 7):
+def generate_typed_meal_plan(userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 7):
     recipes = get_recipe_tag_data(mealType)
     store = [r['recipe'] for r in recipes]
     if len(userRecipes) == 0:
@@ -49,12 +53,12 @@ def generate_typed_meal_plan(userRecipes, mealType, mealPlanSize = 7, calibratio
     matchingList = []
     for calibrationPk in userRecipes:
         matchingList.append(find_similar_recipes(recipes, int(calibrationPk), calibrationThreshold, tfidfMatrix))
-    return merge_lists(matchingList, userRecipes, mealPlanSize)
+    return merge_lists(matchingList, userRecipes, mealPlanSize, duplicates)
 
 #merges recommendations from each base calibration recipe, uses a combination of two approaches
 #1. If different calibration recipes produce the same match, it is more likely to appear in the output recommendation
 #2. If each calibration recipe produces a distinct result, the most certain matches will appear in the output recommendation
-def merge_lists(matchingLists, userRecipes, mealPlanSize):
+def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates):
     matchCount = defaultdict(int)
     aggregateMatches = []
     for match in matchingLists:
@@ -62,9 +66,10 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize):
             recipeName = recipe[1]
             recipePk = int(recipe[2])
             key = (recipePk, recipeName)
-            if recipePk not in userRecipes:
-                matchCount[key] += 1
-                aggregateMatches.append(recipe)
+            if key not in duplicates:
+                if recipePk not in userRecipes:
+                    matchCount[key] += 1
+                    aggregateMatches.append(recipe)
 
     recommendations = []
     sortedFreqMatches = np.array(sorted(matchCount.items(), key=operator.itemgetter(1)))[::-1]
@@ -79,9 +84,11 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize):
         confMatch = sortedConfMatches[confIndex]
         if freqMatch[1] > 1:
             recommendations.append(freqMatch[0])
+            duplicates.append(freqMatch[0])
             freqIndex += 1
         elif confMatch not in recommendations:
             recommendations.append(confMatch)
+            duplicates.append(confMatch)
             confIndex += 1
         else:
             confIndex += 1
