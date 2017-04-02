@@ -1,6 +1,6 @@
 from flask import Flask
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.pool import Pool, NullPool
 import sys
 import os
@@ -36,17 +36,16 @@ except Exception as exception:
 
 # use NullPool to avoid idle transactions on postgres
 # set autocommit to true
-engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=False, isolation_level="AUTOCOMMIT", poolclass=NullPool)
-Session = sessionmaker(bind=engine)
-session = Session()
+engine = create_engine('postgresql://' + user + ':' + password + '@' + host + '/' + database, echo=False, poolclass=NullPool)
+session = scoped_session(sessionmaker(bind=engine, autocommit=False, autoflush=False))
 
 # handle close and rolling back sessions
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    session.close()
-
-    if exception and Session.is_active:
-        print(exception)
+    if exception and session.is_active:
+        print("EXCEPTION: " + str(exception))
         session.rollback()
+
+    session.remove()
 
 import api.routes
