@@ -54,11 +54,10 @@ def generate_calibration_pks_from_file():
 
 def scrape_and_populate():
     #page range for populating db in chunks
-    start = 0
-    stop = 150
+    start = 645
+    stop = 1000
     step = 5
-    page_ranges = [(0, 1)]
-    #page_ranges = [(n, min(n+step, stop)) for n in range(start, stop, step)]
+    page_ranges = [(n, min(n+step, stop)) for n in range(start, stop, step)]
     #uncomment for last section only (lunch/dinner meals)
     #page_ranges = []
     #page_ranges.append((150, 1000))

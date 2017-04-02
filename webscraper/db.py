@@ -227,3 +227,10 @@ def get_recipe_tag_data(tag):
     disconnect(conn, cur)
     return json.loads((json.dumps(recipes, indent=2)))
 
+#TODO
+def get_user_ratings(entity):
+    (conn, cur) = connect()
+    query = """SELECT """
+    data = (entity, recipePk, day, meal_type);
+    cur.execute(query, data)
+    disconnect(conn, cur)

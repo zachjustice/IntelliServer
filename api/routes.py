@@ -113,6 +113,28 @@ class EntityRecipes(Resource):
 
         return entityRecipeRating.as_dict()
 
+    @auth.login_required
+    def put(self, entity_pk, recipe_pk):
+        params = self.reqparse.parse_args()
+
+        existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
+
+        if existing_entity_rating is None:
+            return abort(400, "No recipe exists for that user")
+
+        if params.is_favorite is not None:
+            existing_entity_rating.is_favorite = params['is_favorite']
+
+        if params.is_calibration_recipe is not None:
+            existing_entity_rating.is_calibration_recipe = params['is_calibration_recipe']
+
+        if params.rating is not None:
+            existing_entity_rating.rating = params['rating']
+
+        session.commit()
+
+        return existing_entity_rating.as_dict()
+
 class EntitiesList(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

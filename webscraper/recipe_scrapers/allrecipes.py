@@ -41,19 +41,38 @@ class AllRecipes(AbstractScraper):
 
     def nutrition_info(self):
         nutrition_dict = {}
+
         servings = self.soup.find(itemprop='recipeYield')['content']
         nutrition_dict['servings'] = str(servings)
-        calories = self.soup.find(itemprop='calories').get_text()
+
+        calories = self.soup.find(itemprop='calories')
+        if calories is not None:
+            calories = calories.get_text()
         nutrition_dict['calories'] = str(calories)
-        fat = self.soup.find(itemprop='fatContent').get_text()
+
+        fat = self.soup.find(itemprop='fatContent')
+        if fat is not None:
+            fat = fat.get_text()
         nutrition_dict['fat'] = str(fat)
-        protein = self.soup.find(itemprop='proteinContent').get_text()
+
+        protein = self.soup.find(itemprop='proteinContent')
+        if protein is not None:
+            protein = protein.get_text()
         nutrition_dict['protein'] = str(protein)
-        cholesterol = self.soup.find(itemprop='cholesterolContent').get_text()
+
+        cholesterol = self.soup.find(itemprop='cholesterolContent')
+        if cholesterol is not None:
+            cholesterol = cholesterol.get_text()
         nutrition_dict['cholesterol'] = str(cholesterol)
-        sodium = self.soup.find(itemprop='sodiumContent').get_text()
+
+        sodium = self.soup.find(itemprop='sodiumContent')
+        if sodium is not None:
+            sodium = sodium.get_text()
         nutrition_dict['sodium'] = str(sodium)
-        carbs = self.soup.find(itemprop='carbohydrateContent').get_text()
+
+        carbs = self.soup.find(itemprop='carbohydrateContent')
+        if carbs is not None:
+            carbs = carbs.get_text()
         nutrition_dict['carbs'] = str(carbs)
         return nutrition_dict
 

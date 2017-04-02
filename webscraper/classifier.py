@@ -7,7 +7,7 @@ import math
 import random
 import numpy as np
 from db import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
