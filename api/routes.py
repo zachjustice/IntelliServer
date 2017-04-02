@@ -97,27 +97,14 @@ class EntityRecipes(Resource):
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
         super(EntityRecipes, self).__init__()
 
+
     @auth.login_required
     @validate_access
-    def put(self, entity_pk, recipe_pk):
-        params = self.reqparse.parse_args()
-
+    def get(self, entity_pk, recipe_pk):
         entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
-        if entity_rating is None: # enty doesn't exist
-            return abort(400, "Recipe rating doesn't exist for user")
-
-        if params.rating is not None:
-            entity_rating.rating = params.rating
-        if params.is_favorite is not None:
-            entity_rating.is_favorite = params.is_favorite
-        if params.is_calibration_recipe is not None:
-            entity_rating.is_calibration_recipe = params.is_calibration_recipe
-        if params.notes is not None:
-            entity_rating.notes = params.notes
-
-        session.commit()
-
-        return entityRecipeRating.as_dict()
+        if entity_rating is None:
+            return None
+        return entity_rating.as_dict()
 
     @auth.login_required
     @validate_access
@@ -446,7 +433,7 @@ class MealPlans(Resource):
         params = self.reqparse.parse_args()
         recipe_pk = params['recipe_pk']
 
-        meal_plan.recipe_fk = recipe_pk 
+        meal_plan.recipe_fk = recipe_pk
         session.commit()
 
         return meal_plan.as_dict()
