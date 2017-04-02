@@ -392,9 +392,8 @@ class EntityMealPlans(Resource):
                 meal_plan_dict[eat_on][meal_plan.meal_type] = []
             meal_plan_dict[eat_on][meal_plan.meal_type] = meal_plan.as_dict()
 
-        # if there's only one date don't index by date
-        # just return the breakfast, lunch, and dinner keys
-        if len(meal_plan_dict) == 1:
+        # if the date param is used just return the breakfast, lunch, and dinner keys
+        if date is not None and start_date is None and end_date is None:
             meal_plan_dict = meal_plan_dict[meal_plan_dict.keys()[0]]
 
         return meal_plan_dict
