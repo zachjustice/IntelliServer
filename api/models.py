@@ -153,12 +153,12 @@ class Recipe(Base):
                 self.name, self.description, self.preparation_time, self.image_url, self.nutrition_info)
 
      def as_dict(self):
-         self.nutrition_info['serving_count'] = self.serving_count
-         self.nutrition_info['calories'] = self.calories
-         self.nutrition_info['protein'] = self.protein
-         self.nutrition_info['carbs'] = self.carbs
-         self.nutrition_info['cholesterol'] = self.cholesterol
-         self.nutrition_info['sodium'] = self.sodium
+         self.nutrition_info['Serving Count'] = self.serving_count
+         self.nutrition_info['Calories'] = self.calories
+         self.nutrition_info['Protein'] = self.protein
+         self.nutrition_info['Carbs'] = self.carbs
+         self.nutrition_info['Cholesterol'] = self.cholesterol
+         self.nutrition_info['Sodium'] = self.sodium
 
          recipe_pks = my_map(lambda r: r.ingredient_fk, self.ingredient_recipe)
          ingredients = filter(lambda ingredient_recipe: ingredient_recipe.recipe_fk == self.recipe_pk, self.ingredient_recipe)
