@@ -5,6 +5,7 @@ from webscraper.classifier import generate_meal_plan
 from api.models import *
 from api import app, session
 import datetime
+import json
 
 my_api = Api(app) # resources are added to this object
 auth = HTTPBasicAuth()
@@ -93,8 +94,10 @@ class EntityRecipes(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('rating', required=False, type=int, location='json')
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
-        self.reqparse.add_argument('is_favorite', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
+
+        self.reqparse_get = reqparse.RequestParser()
+        self.reqparse_get.add_argument('is_favorite', required=False, type=str, location='args')
         super(EntityRecipes, self).__init__()
 
 
@@ -108,6 +111,19 @@ class EntityRecipes(Resource):
 
     @auth.login_required
     @validate_access
+    def get(self, entity_pk):
+       params = self.reqparse_get.parse_args()
+       #get favorite recipes only
+       if params.is_favorite is not None:
+           entity_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == int(eval(params.is_favorite)))
+       else:
+            entity_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk)
+       if entity_ratings is None:
+            return None
+       return my_map(lambda e: e.as_dict(), entity_ratings)
+
+    @auth.login_required
+    @validate_access
     def post(self, entity_pk, recipe_pk):
         params = self.reqparse.parse_args()
 
@@ -115,8 +131,6 @@ class EntityRecipes(Resource):
         if existing_entity_rating is not None: # enty exists
             return abort(400, "Recipe rating already exists for user")
 
-        if params.is_favorite is None:
-            params.is_favorite = False
         if params.is_calibration_recipe is None:
             params.is_calibration_recipe = False
 
@@ -124,7 +138,6 @@ class EntityRecipes(Resource):
                 entity_fk=entity_pk,
                 recipe_fk=recipe_pk,
                 rating=params.rating,
-                is_favorite = params.is_favorite,
                 is_calibration_recipe = params.is_calibration_recipe,
                 notes = params.notes
         )
@@ -142,9 +155,6 @@ class EntityRecipes(Resource):
 
         if existing_entity_rating is None:
             return abort(400, "No recipe exists for that user")
-
-        if params.is_favorite is not None:
-            existing_entity_rating.is_favorite = params['is_favorite']
 
         if params.is_calibration_recipe is not None:
             existing_entity_rating.is_calibration_recipe = params['is_calibration_recipe']
@@ -408,7 +418,6 @@ class EntityMealPlans(Resource):
 
         #call algorithm on number of days till cron-job updates on Sunday
         num_days = 7 - datetime.datetime.today().weekday()
-        num_days = 4
         try:
             generate_meal_plan(entity_pk, num_days)
         #return error for problem, otherwise return None
@@ -451,6 +460,7 @@ my_api.add_resource(CurrentEntity, '/api/v2.0/entities/current', endpoint = 'cur
 my_api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 my_api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
 my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes/<int:recipe_pk>', endpoint = 'entityrecipes')
+my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes', endpoint = 'entityrecipees')
 
 my_api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
 
