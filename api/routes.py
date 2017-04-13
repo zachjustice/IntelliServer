@@ -10,6 +10,7 @@ from api import app, session
 from ingredient_names import ingredient_names
 from sqlalchemy import text
 import datetime
+import json
 
 my_api = Api(app) # resources are added to this object
 auth = HTTPBasicAuth()
@@ -98,31 +99,19 @@ class EntityRecipes(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('rating', required=False, type=int, location='json')
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
-        self.reqparse.add_argument('is_favorite', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
+
         super(EntityRecipes, self).__init__()
+
 
     @auth.login_required
     @validate_access
-    def put(self, entity_pk, recipe_pk):
-        params = self.reqparse.parse_args()
-
+    def get(self, entity_pk, recipe_pk):
         entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
-        if entity_rating is None: # enty doesn't exist
-            return abort(400, "Recipe rating doesn't exist for user")
+        if entity_rating is None:
+            return None
+        return entity_rating.as_dict()
 
-        if params.rating is not None:
-            entity_rating.rating = params.rating
-        if params.is_favorite is not None:
-            entity_rating.is_favorite = params.is_favorite
-        if params.is_calibration_recipe is not None:
-            entity_rating.is_calibration_recipe = params.is_calibration_recipe
-        if params.notes is not None:
-            entity_rating.notes = params.notes
-
-        session.commit()
-
-        return entityRecipeRating.as_dict()
 
     @auth.login_required
     @validate_access
@@ -133,8 +122,6 @@ class EntityRecipes(Resource):
         if existing_entity_rating is not None: # enty exists
             return abort(400, "Recipe rating already exists for user")
 
-        if params.is_favorite is None:
-            params.is_favorite = False
         if params.is_calibration_recipe is None:
             params.is_calibration_recipe = False
 
@@ -142,7 +129,6 @@ class EntityRecipes(Resource):
                 entity_fk=entity_pk,
                 recipe_fk=recipe_pk,
                 rating=params.rating,
-                is_favorite = params.is_favorite,
                 is_calibration_recipe = params.is_calibration_recipe,
                 notes = params.notes
         )
@@ -151,6 +137,25 @@ class EntityRecipes(Resource):
         session.commit()
 
         return entityRecipeRating.as_dict()
+
+    @auth.login_required
+    def put(self, entity_pk, recipe_pk):
+        params = self.reqparse.parse_args()
+
+        existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
+
+        if existing_entity_rating is None:
+            return abort(400, "No recipe exists for that user")
+
+        if params.is_calibration_recipe is not None:
+            existing_entity_rating.is_calibration_recipe = params['is_calibration_recipe']
+
+        if params.rating is not None:
+            existing_entity_rating.rating = params['rating']
+
+        session.commit()
+
+        return existing_entity_rating.as_dict()
 
 class EntitiesList(Resource):
     def __init__(self):
@@ -350,7 +355,10 @@ class EntityMealPlans(Resource):
         self.reqparse.add_argument('recipe_pk', required = False, type=str, location='args')
         self.reqparse.add_argument('start_date', required = False, type=str, location='args')
         self.reqparse.add_argument('end_date', required = False, type=str, location='args')
-        super(EntityMealPlans, self).__init__()
+        self.reqparse.add_argument('is_favorite', required=False, type=str, location='args')
+        self.reqparse.add_argument('is_breakfast', required=False, type=str, location='args')
+        self.reqparse.add_argument('is_lunch', required=False, type=str, location='args')
+        self.reqparse.add_argument('is_dinner', required=False, type=str, location='args')
 
     @auth.login_required
     @validate_access
@@ -375,6 +383,25 @@ class EntityMealPlans(Resource):
                 date = str(time.strftime("%Y-%m-%d"))
             meal_plans_query = meal_plans_query.filter(MealPlan.eat_on == date)
 
+        #get favorite recipes only
+        if params.is_favorite is not None:
+           entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == 1).all()
+           favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
+           meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
+
+        #filter based on meal type parameters
+        meal_types = []
+        if params.is_breakfast is not None:
+            meal_types.append('breakfast')
+        if params.is_lunch is not None:
+            meal_types.append('lunch')
+        if params.is_dinner is not None:
+            meal_types.append('dinner')
+
+        #final filtering of meals
+        if len(meal_types) > 0:
+            meal_plans_query = meal_plans_query.filter(MealPlan.meal_type.in_(meal_types))
+
         meal_plans = meal_plans_query.all()
         if meal_plans is None:
             return None
@@ -388,10 +415,10 @@ class EntityMealPlans(Resource):
                 meal_plan_dict[eat_on][meal_plan.meal_type] = []
             meal_plan_dict[eat_on][meal_plan.meal_type] = meal_plan.as_dict()
 
-        # if there's only one date don't index by date
-        # just return the breakfast, lunch, and dinner keys
-        if len(meal_plan_dict) == 1:
-            meal_plan_dict = meal_plan_dict[meal_plan_dict.keys()[0]]
+        # if the date param is used just return the breakfast, lunch, and dinner keys
+        if date is not None and start_date is None and end_date is None:
+            if len(meal_plan_dict.keys()) > 0:
+                meal_plan_dict = meal_plan_dict[meal_plan_dict.keys()[0]]
 
         return meal_plan_dict
 
@@ -511,6 +538,7 @@ my_api.add_resource(CurrentEntity, '/api/v2.0/entities/current', endpoint = 'cur
 my_api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 my_api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
 my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes/<int:recipe_pk>', endpoint = 'entityrecipes')
+my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes', endpoint = 'entityrecipees')
 
 my_api.add_resource(EntityGroceryList, '/api/v2.0/entities/<int:entity_pk>/grocery_list', endpoint = 'entitygrocerylist')
 

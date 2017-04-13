@@ -27,6 +27,7 @@ class Entity(Base):
     entity_tags = relationship("EntityTag", back_populates="entity")
     allergies = relationship("Allergy", back_populates="entity")
     meal_plans = relationship("MealPlan", back_populates="entity")
+    entity_recipe_rating = relationship("EntityRecipeRating", back_populates="entity")
 
     def __repr__(self):
         return "<User(entity_pk=%s, username='%s', first_name='%s', last_name='%s', is_admin='%s', email='%s')>" % (self.entity_pk, self.username, self.first_name, self.last_name, self.is_admin, self.email)
@@ -146,6 +147,7 @@ class Recipe(Base):
      meal_plans = relationship("MealPlan", back_populates="recipe")
      recipe_tags = relationship("RecipeTag", back_populates="recipe")
      ingredient_recipe = relationship("IngredientRecipe", back_populates="recipe")
+     entity_recipe_rating = relationship("EntityRecipeRating", back_populates="recipe")
 
 
      def __repr__(self):
@@ -154,11 +156,11 @@ class Recipe(Base):
 
      def as_dict(self):
          self.nutrition_info['Serving Count'] = self.serving_count
-         self.nutrition_info['calories'] = self.calories
-         self.nutrition_info['protein'] = self.protein
-         self.nutrition_info['carbs'] = self.carbs
-         self.nutrition_info['cholesterol'] = self.cholesterol
-         self.nutrition_info['sodium'] = self.sodium
+         self.nutrition_info['Calories'] = self.calories
+         self.nutrition_info['Protein'] = self.protein
+         self.nutrition_info['Carbs'] = self.carbs
+         self.nutrition_info['Cholesterol'] = self.cholesterol
+         self.nutrition_info['Sodium'] = self.sodium
 
          recipe_pks = my_map(lambda r: r.ingredient_fk, self.ingredient_recipe)
          ingredients = filter(lambda ingredient_recipe: ingredient_recipe.recipe_fk == self.recipe_pk, self.ingredient_recipe)
@@ -227,10 +229,10 @@ class EntityRecipeRating(Base):
     is_favorite = Column(Boolean, default=False)
     is_calibration_recipe = Column(Boolean, default=False)
     notes = Column(String)
-#
-#    recipe = relationship("Recipe", back_populates="entity_recipe_rating")
-#    entity = relationship("Entity", back_populates="entity_recipe_rating")
-#
+
+    recipe = relationship("Recipe", back_populates="entity_recipe_rating")
+    entity = relationship("Entity", back_populates="entity_recipe_rating")
+
     def as_dict(self):
         return {
             'entity_recipe_rating_pk' : self.entity_recipe_rating_pk,

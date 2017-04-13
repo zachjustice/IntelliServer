@@ -6,7 +6,7 @@ from api.models import my_map
 entities = my_map(lambda r: r['entity'], get_entity_pks())
 
 for entity in entities:
-    generate_meal_plan(entity, 7)
+    generate_meal_plan(entity, 7, timeDelta = 0)
     print("Meal Plan successfully generated for entity" + str(entity))
 
 
