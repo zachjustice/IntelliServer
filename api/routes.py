@@ -385,25 +385,17 @@ class EntityMealPlans(Resource):
            meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
 
         #filter based on meal type parameters
-        meal_types = set()
+        meal_types = []
         if params.is_breakfast is not None:
-            meal_types.add('breakfast')
+            meal_types.append('breakfast')
         if params.is_lunch is not None:
-            meal_types.add('lunch')
+            meal_types.append('lunch')
         if params.is_dinner is not None:
-            meal_types.add('dinner')
-        recipes = my_map(lambda e: e.recipe, meal_plans_query.all())
-        recipe_tags = my_map(lambda r: r.recipe_tags, recipes)
-        matching_recipe_fks = []
-        for r in recipe_tags:
-            tags_list = set(my_map(lambda t: t.tag.name, r))
-            #test if recipe has any tags being queried
-            if meal_types & tags_list:
-                matching_recipe_fks.append(str(r[0].recipe_fk))
+            meal_types.append('dinner')
 
         #final filtering of meals
         if len(meal_types) > 0:
-            meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(matching_recipe_fks))
+            meal_plans_query = meal_plans_query.filter(MealPlan.meal_type.in_(meal_types))
 
         meal_plans = meal_plans_query.all()
         if meal_plans is None:
