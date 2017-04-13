@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.abspath('./webscraper/'))
+sys.path.append('/var/www/webscraper/')
 import json
 import operator
 import math
