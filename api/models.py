@@ -280,7 +280,7 @@ class Ingredient(Base):
     ingredient_recipe = relationship("IngredientRecipe", back_populates="ingredient")
 
     def as_dict(self):
-        {
+        return {
             'ingredient_pk' : self.ingredient_pk,
             'name' : self.name
         }
