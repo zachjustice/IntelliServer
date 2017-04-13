@@ -433,7 +433,8 @@ class EntityMealPlans(Resource):
 
         # if the date param is used just return the breakfast, lunch, and dinner keys
         if date is not None and start_date is None and end_date is None:
-            meal_plan_dict = meal_plan_dict[meal_plan_dict.keys()[0]]
+            if len(meal_plan_dict.keys()) > 0:
+                meal_plan_dict = meal_plan_dict[meal_plan_dict.keys()[0]]
 
         return meal_plan_dict
 
