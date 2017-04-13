@@ -98,6 +98,9 @@ class EntityRecipes(Resource):
 
         self.reqparse_get = reqparse.RequestParser()
         self.reqparse_get.add_argument('is_favorite', required=False, type=str, location='args')
+        self.reqparse_get.add_argument('is_breakfast', required=False, type=str, location='args')
+        self.reqparse_get.add_argument('is_lunch', required=False, type=str, location='args')
+        self.reqparse_get.add_argument('is_dinner', required=False, type=str, location='args')
         super(EntityRecipes, self).__init__()
 
 
@@ -118,8 +121,31 @@ class EntityRecipes(Resource):
            entity_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == int(eval(params.is_favorite)))
        else:
             entity_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk)
+
        if entity_ratings is None:
-            return None
+           return None
+        #filter based on meal type parameters
+       meal_types = set()
+       if params.is_breakfast is not None:
+           meal_types.add('breakfast')
+       if params.is_lunch is not None:
+           meal_types.add('lunch')
+       if params.is_dinner is not None:
+           meal_types.add('dinner')
+       recipes = my_map(lambda e: e.recipe, entity_ratings.all())
+       recipe_tags = my_map(lambda r: r.recipe_tags, recipes)
+       matching_recipe_fks = []
+       for r in recipe_tags:
+           tags_list = set(my_map(lambda t: t.tag.name, r))
+           #test if recipe has any tags being queried
+           if meal_types & tags_list:
+               matching_recipe_fks.append(str(r[0].recipe_fk))
+
+       #final filtering of entity_ratings
+       if len(meal_types) > 0:
+           entity_ratings = entity_ratings.filter(EntityRecipeRating.recipe_fk.in_(matching_recipe_fks)).all()
+           recipes = my_map(lambda e: e.recipe_fk, entity_ratings)
+
        return my_map(lambda e: e.as_dict(), entity_ratings)
 
     @auth.login_required

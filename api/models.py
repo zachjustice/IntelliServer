@@ -27,6 +27,7 @@ class Entity(Base):
     entity_tags = relationship("EntityTag", back_populates="entity")
     allergies = relationship("Allergy", back_populates="entity")
     meal_plans = relationship("MealPlan", back_populates="entity")
+    entity_recipe_rating = relationship("EntityRecipeRating", back_populates="entity")
 
     def __repr__(self):
         return "<User(entity_pk=%s, username='%s', first_name='%s', last_name='%s', is_admin='%s', email='%s')>" % (self.entity_pk, self.username, self.first_name, self.last_name, self.is_admin, self.email)
@@ -146,6 +147,7 @@ class Recipe(Base):
      meal_plans = relationship("MealPlan", back_populates="recipe")
      recipe_tags = relationship("RecipeTag", back_populates="recipe")
      ingredient_recipe = relationship("IngredientRecipe", back_populates="recipe")
+     entity_recipe_rating = relationship("EntityRecipeRating", back_populates="recipe")
 
 
      def __repr__(self):
@@ -228,8 +230,8 @@ class EntityRecipeRating(Base):
     is_calibration_recipe = Column(Boolean, default=False)
     notes = Column(String)
 #
-#    recipe = relationship("Recipe", back_populates="entity_recipe_rating")
-#    entity = relationship("Entity", back_populates="entity_recipe_rating")
+    recipe = relationship("Recipe", back_populates="entity_recipe_rating")
+    entity = relationship("Entity", back_populates="entity_recipe_rating")
 #
     def as_dict(self):
         return {
