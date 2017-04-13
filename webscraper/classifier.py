@@ -31,12 +31,10 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 3):
     #lunch
     lunchPks = userRecipes[1]
     mealPlan.append(generate_typed_meal_plan(lunchPks, 'lunch', numDays, duplicates))
-    print(duplicates)
 
     #dinner
     dinnerPks = userRecipes[2]
     mealPlan.append(generate_typed_meal_plan(dinnerPks, 'dinner', numDays, duplicates))
-    print(duplicates)
 
     #insert into db
     today = datetime.now()
