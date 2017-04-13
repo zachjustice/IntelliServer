@@ -96,11 +96,6 @@ class EntityRecipes(Resource):
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
 
-        self.reqparse_get = reqparse.RequestParser()
-        self.reqparse_get.add_argument('is_favorite', required=False, type=str, location='args')
-        self.reqparse_get.add_argument('is_breakfast', required=False, type=str, location='args')
-        self.reqparse_get.add_argument('is_lunch', required=False, type=str, location='args')
-        self.reqparse_get.add_argument('is_dinner', required=False, type=str, location='args')
         super(EntityRecipes, self).__init__()
 
 
@@ -112,44 +107,6 @@ class EntityRecipes(Resource):
             return None
         return entity_rating.as_dict()
 
-    @auth.login_required
-    @validate_access
-    def get(self, entity_pk):
-       params = self.reqparse_get.parse_args()
-       #get favorite recipes only
-       if params.is_favorite is not None:
-           entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == int(eval(params.is_favorite))).all()
-           favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
-           user_meals = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk, MealPlan.recipe_fk.in_(favorite_recipe_fks))
-       else:
-            user_meals = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk)
-
-       if user_meals is None:
-           return None
-        #filter based on meal type parameters
-       meal_types = set()
-       if params.is_breakfast is not None:
-           meal_types.add('breakfast')
-       if params.is_lunch is not None:
-           meal_types.add('lunch')
-       if params.is_dinner is not None:
-           meal_types.add('dinner')
-       recipes = my_map(lambda e: e.recipe, user_meals.all())
-       recipe_tags = my_map(lambda r: r.recipe_tags, recipes)
-       matching_recipe_fks = []
-       for r in recipe_tags:
-           tags_list = set(my_map(lambda t: t.tag.name, r))
-           #test if recipe has any tags being queried
-           if meal_types & tags_list:
-               matching_recipe_fks.append(str(r[0].recipe_fk))
-
-       #final filtering of user_meals
-       if len(meal_types) > 0:
-           user_meals = user_meals.filter(MealPlan.recipe_fk.in_(matching_recipe_fks)).all()
-           recipes = my_map(lambda e: e.recipe_fk, user_meals)
-
-       to_ret = my_map(lambda e: e.as_dict(), user_meals)
-       return to_ret
 
     @auth.login_required
     @validate_access
@@ -393,7 +350,10 @@ class EntityMealPlans(Resource):
         self.reqparse.add_argument('recipe_pk', required = False, type=str, location='args')
         self.reqparse.add_argument('start_date', required = False, type=str, location='args')
         self.reqparse.add_argument('end_date', required = False, type=str, location='args')
-        super(EntityMealPlans, self).__init__()
+        self.reqparse.add_argument('is_favorite', required=False, type=str, location='args')
+        self.reqparse.add_argument('is_breakfast', required=False, type=str, location='args')
+        self.reqparse.add_argument('is_lunch', required=False, type=str, location='args')
+        self.reqparse.add_argument('is_dinner', required=False, type=str, location='args')
 
     @auth.login_required
     @validate_access
@@ -418,6 +378,33 @@ class EntityMealPlans(Resource):
                 date = str(time.strftime("%Y-%m-%d"))
             meal_plans_query = meal_plans_query.filter(MealPlan.eat_on == date)
 
+        #get favorite recipes only
+        if params.is_favorite is not None:
+           entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == 1).all()
+           favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
+           meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
+
+        #filter based on meal type parameters
+        meal_types = set()
+        if params.is_breakfast is not None:
+            meal_types.add('breakfast')
+        if params.is_lunch is not None:
+            meal_types.add('lunch')
+        if params.is_dinner is not None:
+            meal_types.add('dinner')
+        recipes = my_map(lambda e: e.recipe, meal_plans_query.all())
+        recipe_tags = my_map(lambda r: r.recipe_tags, recipes)
+        matching_recipe_fks = []
+        for r in recipe_tags:
+            tags_list = set(my_map(lambda t: t.tag.name, r))
+            #test if recipe has any tags being queried
+            if meal_types & tags_list:
+                matching_recipe_fks.append(str(r[0].recipe_fk))
+
+        #final filtering of meals
+        if len(meal_types) > 0:
+            meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(matching_recipe_fks))
+
         meal_plans = meal_plans_query.all()
         if meal_plans is None:
             return None
@@ -432,8 +419,8 @@ class EntityMealPlans(Resource):
             meal_plan_dict[eat_on][meal_plan.meal_type] = meal_plan.as_dict()
 
         # if the date param is used just return the breakfast, lunch, and dinner keys
-        if date is not None and start_date is None and end_date is None:
-            meal_plan_dict = meal_plan_dict[meal_plan_dict.keys()[0]]
+        #if date is not None and start_date is None and end_date is None:
+        #    meal_plan_dict = meal_plan_dict[meal_plan_dict.keys()[0]]
 
         return meal_plan_dict
 
