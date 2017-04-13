@@ -118,11 +118,13 @@ class EntityRecipes(Resource):
        params = self.reqparse_get.parse_args()
        #get favorite recipes only
        if params.is_favorite is not None:
-           entity_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == int(eval(params.is_favorite)))
+           entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == int(eval(params.is_favorite))).all()
+           favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
+           user_meals = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk, MealPlan.recipe_fk.in_(favorite_recipe_fks))
        else:
-            entity_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk)
+            user_meals = session.query(MealPlan).filter(MealPlan.entity_fk == entity_pk)
 
-       if entity_ratings is None:
+       if user_meals is None:
            return None
         #filter based on meal type parameters
        meal_types = set()
@@ -132,7 +134,7 @@ class EntityRecipes(Resource):
            meal_types.add('lunch')
        if params.is_dinner is not None:
            meal_types.add('dinner')
-       recipes = my_map(lambda e: e.recipe, entity_ratings.all())
+       recipes = my_map(lambda e: e.recipe, user_meals.all())
        recipe_tags = my_map(lambda r: r.recipe_tags, recipes)
        matching_recipe_fks = []
        for r in recipe_tags:
@@ -141,12 +143,13 @@ class EntityRecipes(Resource):
            if meal_types & tags_list:
                matching_recipe_fks.append(str(r[0].recipe_fk))
 
-       #final filtering of entity_ratings
+       #final filtering of user_meals
        if len(meal_types) > 0:
-           entity_ratings = entity_ratings.filter(EntityRecipeRating.recipe_fk.in_(matching_recipe_fks)).all()
-           recipes = my_map(lambda e: e.recipe_fk, entity_ratings)
+           user_meals = user_meals.filter(MealPlan.recipe_fk.in_(matching_recipe_fks)).all()
+           recipes = my_map(lambda e: e.recipe_fk, user_meals)
 
-       return my_map(lambda e: e.as_dict(), entity_ratings)
+       to_ret = my_map(lambda e: e.as_dict(), user_meals)
+       return to_ret
 
     @auth.login_required
     @validate_access
