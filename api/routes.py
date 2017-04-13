@@ -7,7 +7,6 @@ from flask_httpauth import HTTPBasicAuth
 from webscraper.classifier import generate_meal_plan
 from api.models import *
 from api import app, session
-from ingredient_names import ingredient_names
 from sqlalchemy import text
 import datetime
 import json
