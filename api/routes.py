@@ -1,9 +1,14 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 from flask import Flask, jsonify, abort, make_response, request, g
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
 from webscraper.classifier import generate_meal_plan
 from api.models import *
 from api import app, session
+from ingredient_names import ingredient_names
+from sqlalchemy import text
 import datetime
 
 my_api = Api(app) # resources are added to this object
@@ -424,10 +429,74 @@ class MealPlans(Resource):
         params = self.reqparse.parse_args()
         recipe_pk = params['recipe_pk']
 
-        meal_plan.recipe_fk = recipe_pk 
+        meal_plan.recipe_fk = recipe_pk
         session.commit()
 
         return meal_plan.as_dict()
+
+class EntityGroceryList(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('start_date', required = True, type=str, location='args')
+        self.reqparse.add_argument('end_date', required = True, type=str, location='args')
+        super(EntityGroceryList, self).__init__()
+
+    @auth.login_required
+    @validate_access
+    def get(self, entity_pk):
+        params = self.reqparse.parse_args()
+        start_date = params['start_date']
+        end_date = params['end_date']
+
+        query_params = {
+            "entity_pk": entity_pk,
+            "start_date": start_date,
+            "end_date": end_date
+        }
+        print(query_params)
+
+        # using raw sql, since flask takes forever on the joins
+        query = text("""
+            SELECT
+                i.name,
+                ir.description,
+                r.name
+            FROM tb_meal_plan mp
+            JOIN tb_recipe r
+                ON r.recipe = mp.recipe
+            JOIN tb_ingredient_recipe ir
+                ON ir.recipe = r.recipe
+            JOIN tb_ingredient i
+                ON i.ingredient = ir.ingredient
+            WHERE
+                mp.entity = :entity_pk AND
+                mp.eat_on::date >= :start_date AND
+                mp.eat_on::date <= :end_date
+            GROUP BY
+                i.name, ir.description, r.name
+            ORDER BY i.name ASC;
+        """)
+        retval = session.execute(query, query_params).fetchall()
+
+        grocery_list = {}
+        for row in retval:
+            ingredient_name = row[0]
+            ingredient_description = row[1]
+            recipe_name = row[2]
+
+            recipe_obj = {
+                'ingredient_description': ingredient_description,
+                'recipe_name': recipe_name
+            }
+
+            ingredient_name = ingredient_name.decode()
+            if ingredient_name not in grocery_list:
+                grocery_list[ingredient_name] = []
+
+            grocery_list[ingredient_name].append(recipe_obj)
+
+        return grocery_list
+
 
 my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
 
@@ -442,6 +511,8 @@ my_api.add_resource(CurrentEntity, '/api/v2.0/entities/current', endpoint = 'cur
 my_api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 my_api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
 my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes/<int:recipe_pk>', endpoint = 'entityrecipes')
+
+my_api.add_resource(EntityGroceryList, '/api/v2.0/entities/<int:entity_pk>/grocery_list', endpoint = 'entitygrocerylist')
 
 my_api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
 

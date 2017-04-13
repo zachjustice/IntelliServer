@@ -153,7 +153,7 @@ class Recipe(Base):
                 self.name, self.description, self.preparation_time, self.image_url, self.nutrition_info)
 
      def as_dict(self):
-         self.nutrition_info['serving_count'] = self.serving_count
+         self.nutrition_info['Serving Count'] = self.serving_count
          self.nutrition_info['calories'] = self.calories
          self.nutrition_info['protein'] = self.protein
          self.nutrition_info['carbs'] = self.carbs
@@ -278,7 +278,7 @@ class Ingredient(Base):
     ingredient_recipe = relationship("IngredientRecipe", back_populates="ingredient")
 
     def as_dict(self):
-        {
+        return {
             'ingredient_pk' : self.ingredient_pk,
             'name' : self.name
         }
