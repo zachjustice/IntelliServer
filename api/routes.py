@@ -479,7 +479,6 @@ class EntityGroceryList(Resource):
             "start_date": start_date,
             "end_date": end_date
         }
-        print(query_params)
 
         # using raw sql, since flask takes forever on the joins
         query = text("""
