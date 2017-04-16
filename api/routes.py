@@ -93,14 +93,14 @@ class RecipesList(Resource):
         recipes = query.all()
         return (my_map(lambda r: r.as_dict(), recipes))
 
-class EntityRecipes(Resource):
+class EntityRecipeRatings(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('rating', required=False, type=int, location='json')
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
 
-        super(EntityRecipes, self).__init__()
+        super(EntityRecipeRatings, self).__init__()
 
 
     @auth.login_required
@@ -536,8 +536,8 @@ my_api.add_resource(CurrentEntity, '/api/v2.0/entities/current', endpoint = 'cur
 
 my_api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 my_api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
-my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes/<int:recipe_pk>', endpoint = 'entityrecipes')
-my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes', endpoint = 'entityrecipees')
+my_api.add_resource(EntityRecipeRatings, '/api/v2.0/entities/<int:entity_pk>/recipes/<int:recipe_pk>', endpoint = 'entityreciperatings')
+my_api.add_resource(EntityRecipeRatings, '/api/v2.0/entities/<int:entity_pk>/recipes', endpoint = 'entityrecipees')
 
 my_api.add_resource(EntityGroceryList, '/api/v2.0/entities/<int:entity_pk>/grocery_list', endpoint = 'entitygrocerylist')
 
