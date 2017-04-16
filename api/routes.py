@@ -402,6 +402,7 @@ class EntityMealPlans(Resource):
             meal_plans_query = meal_plans_query.filter(MealPlan.meal_type.in_(meal_types))
 
         meal_plans = meal_plans_query.all()
+        print(len(meal_plans))
         if meal_plans is None:
             return None
 
@@ -419,6 +420,7 @@ class EntityMealPlans(Resource):
             if len(meal_plan_dict.keys()) > 0:
                 meal_plan_dict = meal_plan_dict[meal_plan_dict.keys()[0]]
 
+        print(len(meal_plan_dict))
         return meal_plan_dict
 
     @auth.login_required
