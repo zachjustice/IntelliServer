@@ -358,6 +358,7 @@ class EntityMealPlans(Resource):
         self.reqparse.add_argument('is_breakfast', required=False, type=str, location='args')
         self.reqparse.add_argument('is_lunch', required=False, type=str, location='args')
         self.reqparse.add_argument('is_dinner', required=False, type=str, location='args')
+        super(EntityMealPlans, self).__init__()
 
     @auth.login_required
     @validate_access
