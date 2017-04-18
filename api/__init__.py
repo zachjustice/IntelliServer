@@ -11,7 +11,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__)) + '/'
 #### Setup the flask app object ####
 ###################################
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="")
 
 # read from password file
 try:

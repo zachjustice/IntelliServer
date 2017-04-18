@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: latin-1 -*-
 
-from flask import Flask, jsonify, abort, make_response, request, g
+from flask import Flask, jsonify, abort, make_response, request, g, send_from_directory
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
 from webscraper.classifier import generate_meal_plan
@@ -111,7 +111,6 @@ class EntityRecipeRatings(Resource):
             return None
         return entity_rating.as_dict()
 
-
     @auth.login_required
     @validate_access
     def post(self, entity_pk, recipe_pk):
@@ -119,20 +118,26 @@ class EntityRecipeRatings(Resource):
 
         existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
         if existing_entity_rating is not None: # enty exists
-            return abort(400, "Recipe rating already exists for user")
+            existing_entity_rating.rating = params.rating
+            existing_entity_rating.notes = params.notes
+            existing_entity_rating.is_calibration_recipe = params.is_calibration_recipe
 
-        if params.is_calibration_recipe is None:
-            params.is_calibration_recipe = False
+            entityRecipeRating  = existing_entity_rating
+        else:
 
-        entityRecipeRating = EntityRecipeRating(
-                entity_fk=entity_pk,
-                recipe_fk=recipe_pk,
-                rating=params.rating,
-                is_calibration_recipe = params.is_calibration_recipe,
-                notes = params.notes
-        )
+            if params.is_calibration_recipe is None:
+                params.is_calibration_recipe = False
 
-        session.add(entityRecipeRating)
+            entityRecipeRating = EntityRecipeRating(
+                    entity_fk=entity_pk,
+                    recipe_fk=recipe_pk,
+                    rating=params.rating,
+                    is_calibration_recipe = params.is_calibration_recipe,
+                    notes = params.notes
+            )
+
+            session.add(entityRecipeRating)
+
         session.commit()
 
         return entityRecipeRating.as_dict()
@@ -536,6 +541,10 @@ class EntityGroceryList(Resource):
             grocery_list[ingredient_name].append(recipe_obj)
 
         return grocery_list
+
+@app.route("/")
+def static_index():
+    return send_from_directory("static", "index.html")
 
 my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
 

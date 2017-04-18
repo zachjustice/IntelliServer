@@ -1,0 +1,64 @@
+<html>
+<head>
+    <title>IntelliChef Test Suite</title>
+
+    <style type="text/css">
+        #content {
+            width: 100%;
+            height: 100%;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .meal {
+            display: inline-block;
+            width: 30%;
+            height: 213px;
+            margin: 1.55%;
+        }
+
+        .recipe_name {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <noscript>&lt;h2 style="color: #ff0000"&gt;Seems your browser doesn't support Javascript! Websocket relies on Javascript being
+    enabled. Please enable
+    Javascript and reload this page!&lt;/h2&gt;
+    </noscript>
+
+    <div id="content">
+        <div id="rating">
+        </div>
+
+        <div class="meal" id="breakfast">
+            <img id="breakfast_image" />
+            <p class="recipe_name" id="breakfast_name"></p>
+            <button class="breakfast_button rate_up" id="breakfast_rate_up">I Like It!</button>
+            <button class="breakfast_button rate_down" id="breakfast_rate_down">I Don't Like It!</button>
+        </div>
+
+        <div class="meal" id="lunch">
+            <img id="lunch_image" />
+            <p class="recipe_name" id="lunch_name"></p>
+            <button class="lunch_button rate_up" id="lunch_rate_up">I Like It!</button>
+            <button class="lunch_button rate_down" id="lunch_rate_down">I Don't Like It!</button>
+        </div>
+
+        <div class="meal" id="dinner">
+            <img id="dinner_image" />
+            <p class="recipe_name" id="dinner_name"></p>
+            <button class="dinner_button rate_up" id="dinner_rate_up">I Like It!</button>
+            <button class="dinner_button rate_down" id="dinner_rate_down">I Don't Like It!</button>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="/index.js"></script>
+
+</body>
+</html>
