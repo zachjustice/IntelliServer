@@ -68,13 +68,29 @@ function display_recipe(recipe, meal_type) {
         rate_recipe(recipe_pk, rating);
         ratings.push({"recipe_pk": recipe_pk, "rating": rating});
 
-        if(rating == 1)
-        {
+        if(rating == 1) {
             rated_positive++;
         }
 
         var percentage_correct = rated_positive / ratings.length
-        $('#rating').text(percentage_correct);
+        var percentage_last_six = 0;
+        var num_last_six = 0;
+
+        for (var i = ratings.length - 1; i >= 0 && i > ratings.length - 7; i--) {
+            if(ratings[i]['rating'] == 1) {
+                num_last_six++;
+            }
+        }
+
+        if(ratings.length < 6)
+        {
+            percentage_last_six = num_last_six / ratings.length;
+        } else {
+            percentage_last_six = num_last_six / 6;
+        }
+
+        $('#cumulative_rating').text(percentage_correct);
+        $('#running_rating').text(percentage_last_six);
 
         if(ratings.length > 0 && ratings.length % 3 == 0)
         {
