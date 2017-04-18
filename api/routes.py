@@ -353,8 +353,11 @@ class EntityMealPlans(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('date', required = False, type=str, location='args')
         self.reqparse.add_argument('recipe_pk', required = False, type=str, location='args')
+        self.reqparse.add_argument('num_days', required = False, type=int, location='args')
+
         self.reqparse.add_argument('start_date', required = False, type=str, location='args')
         self.reqparse.add_argument('end_date', required = False, type=str, location='args')
+
         self.reqparse.add_argument('is_favorite', required=False, type=str, location='args')
         self.reqparse.add_argument('is_breakfast', required=False, type=str, location='args')
         self.reqparse.add_argument('is_lunch', required=False, type=str, location='args')
@@ -426,18 +429,29 @@ class EntityMealPlans(Resource):
     @validate_access
     def post(self, entity_pk):
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
+        params = self.reqparse.parse_args()
 
         if(entity is None):
             abort(400, "This entity does not exist")
 
         #call algorithm on number of days till cron-job updates on Sunday
-        num_days = 7 - datetime.datetime.today().weekday()
+        if not g.entity.is_admin or params.num_days is None:
+            num_days = 7 - datetime.datetime.today().weekday()
+        else:
+            # only admins should be able to set the number of dates generated
+            num_days = params.num_days
+
+        generated_meal_plans = []
+
         try:
-            generate_meal_plan(entity_pk, num_days)
+            generated_meal_plans = generate_meal_plan(entity_pk, num_days)
         #return error for problem, otherwise return None
         except Exception as e:
+            # Don't want to show users backend error messages.
+            print("Failed to generate meal plan: " + str(e.message))
             abort(400, "Failed to generate meal plan")
-        return {"message": "generated meal plan."}
+
+        return generated_meal_plans
 
 class MealPlans(Resource):
     def __init__(self):
@@ -524,7 +538,6 @@ class EntityGroceryList(Resource):
 
         return grocery_list
 
-
 my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
 
 my_api.add_resource(EntitiesList, '/api/v2.0/entities', endpoint = 'entitieslist')
@@ -543,6 +556,7 @@ my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes',
 my_api.add_resource(EntityGroceryList, '/api/v2.0/entities/<int:entity_pk>/grocery_list', endpoint = 'entitygrocerylist')
 
 my_api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
+
 
 @app.errorhandler(400)
 def bad_request(e):
