@@ -548,6 +548,7 @@ class EntityGroceryList(Resource):
         return grocery_list
 
 @app.route("/")
+@auth.login_required
 def static_index():
     return send_from_directory("static", "index.html")
 
