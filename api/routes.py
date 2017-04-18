@@ -7,7 +7,6 @@ from flask_httpauth import HTTPBasicAuth
 from webscraper.classifier import generate_meal_plan
 from api.models import *
 from api import app, session
-from ingredient_names import ingredient_names
 from sqlalchemy import text
 import datetime
 import json
@@ -94,14 +93,14 @@ class RecipesList(Resource):
         recipes = query.all()
         return (my_map(lambda r: r.as_dict(), recipes))
 
-class EntityRecipes(Resource):
+class EntityRecipeRatings(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('rating', required=False, type=int, location='json')
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
 
-        super(EntityRecipes, self).__init__()
+        super(EntityRecipeRatings, self).__init__()
 
 
     @auth.login_required
@@ -362,6 +361,7 @@ class EntityMealPlans(Resource):
         self.reqparse.add_argument('is_breakfast', required=False, type=str, location='args')
         self.reqparse.add_argument('is_lunch', required=False, type=str, location='args')
         self.reqparse.add_argument('is_dinner', required=False, type=str, location='args')
+        super(EntityMealPlans, self).__init__()
 
     @auth.login_required
     @validate_access
@@ -494,7 +494,6 @@ class EntityGroceryList(Resource):
             "start_date": start_date,
             "end_date": end_date
         }
-        print(query_params)
 
         # using raw sql, since flask takes forever on the joins
         query = text("""
@@ -550,8 +549,8 @@ my_api.add_resource(CurrentEntity, '/api/v2.0/entities/current', endpoint = 'cur
 
 my_api.add_resource(RecipesList, '/api/v2.0/recipes', endpoint = 'recipeslist')
 my_api.add_resource(Recipes, '/api/v2.0/recipes/<int:recipe_pk>', endpoint ='recipes')
-my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes/<int:recipe_pk>', endpoint = 'entityrecipes')
-my_api.add_resource(EntityRecipes, '/api/v2.0/entities/<int:entity_pk>/recipes', endpoint = 'entityrecipees')
+my_api.add_resource(EntityRecipeRatings, '/api/v2.0/entities/<int:entity_pk>/recipes/<int:recipe_pk>', endpoint = 'entityreciperatings')
+my_api.add_resource(EntityRecipeRatings, '/api/v2.0/entities/<int:entity_pk>/recipes', endpoint = 'entityrecipees')
 
 my_api.add_resource(EntityGroceryList, '/api/v2.0/entities/<int:entity_pk>/grocery_list', endpoint = 'entitygrocerylist')
 

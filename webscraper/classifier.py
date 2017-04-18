@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.abspath('./webscraper/'))
+sys.path.append('/var/www/webscraper/')
 import json
 import operator
 import math
@@ -16,7 +17,7 @@ from scipy import sparse
 
 #highest level method for generating a mealplan - generates a mealplan for numDays days including breakfast, lunch, and dinner
 #note: the userRecipes are expected to be a list of 3 lists - one for each mealType in the order [breakfast list], [lunch list], [dinner list]
-def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 3):
+def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
     #not testing, so grab input from DB
     if userRecipes is None:
         userRecipes = get_calibration_recipe_pks(entityPk)
@@ -30,12 +31,10 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 3):
     #lunch
     lunchPks = userRecipes[1]
     mealPlan.append(generate_typed_meal_plan(lunchPks, 'lunch', numDays, duplicates))
-    print(duplicates)
 
     #dinner
     dinnerPks = userRecipes[2]
     mealPlan.append(generate_typed_meal_plan(dinnerPks, 'dinner', numDays, duplicates))
-    print(duplicates)
 
     #insert into db
     today = datetime.now()
