@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: latin-1 -*-
 
-from flask import Flask, jsonify, abort, make_response, request, g
+from flask import Flask, jsonify, abort, make_response, request, g, send_from_directory
 from flask_restful import Resource, Api, reqparse
 from flask_httpauth import HTTPBasicAuth
 from webscraper.classifier import generate_meal_plan
@@ -111,7 +111,6 @@ class EntityRecipeRatings(Resource):
             return None
         return entity_rating.as_dict()
 
-
     @auth.login_required
     @validate_access
     def post(self, entity_pk, recipe_pk):
@@ -119,20 +118,31 @@ class EntityRecipeRatings(Resource):
 
         existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
         if existing_entity_rating is not None: # enty exists
-            return abort(400, "Recipe rating already exists for user")
+            if( params.rating is not None ):
+                existing_entity_rating.rating = params.rating
 
-        if params.is_calibration_recipe is None:
-            params.is_calibration_recipe = False
+            if( params.notes is not None ):
+                existing_entity_rating.notes = params.notes
 
-        entityRecipeRating = EntityRecipeRating(
-                entity_fk=entity_pk,
-                recipe_fk=recipe_pk,
-                rating=params.rating,
-                is_calibration_recipe = params.is_calibration_recipe,
-                notes = params.notes
-        )
+            if( params.is_calibration_recipe is not None ):
+                existing_entity_rating.is_calibration_recipe = params.is_calibration_recipe
 
-        session.add(entityRecipeRating)
+            entityRecipeRating  = existing_entity_rating
+        else:
+
+            if params.is_calibration_recipe is None:
+                params.is_calibration_recipe = False
+
+            entityRecipeRating = EntityRecipeRating(
+                    entity_fk=entity_pk,
+                    recipe_fk=recipe_pk,
+                    rating=params.rating,
+                    is_calibration_recipe = params.is_calibration_recipe,
+                    notes = params.notes
+            )
+
+            session.add(entityRecipeRating)
+
         session.commit()
 
         return entityRecipeRating.as_dict()
@@ -352,8 +362,11 @@ class EntityMealPlans(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('date', required = False, type=str, location='args')
         self.reqparse.add_argument('recipe_pk', required = False, type=str, location='args')
+        self.reqparse.add_argument('num_days', required = False, type=int, location='args')
+
         self.reqparse.add_argument('start_date', required = False, type=str, location='args')
         self.reqparse.add_argument('end_date', required = False, type=str, location='args')
+
         self.reqparse.add_argument('is_favorite', required=False, type=str, location='args')
         self.reqparse.add_argument('is_breakfast', required=False, type=str, location='args')
         self.reqparse.add_argument('is_lunch', required=False, type=str, location='args')
@@ -426,18 +439,29 @@ class EntityMealPlans(Resource):
     @validate_access
     def post(self, entity_pk):
         entity = session.query(Entity).filter_by(entity_pk=entity_pk).first()
+        params = self.reqparse.parse_args()
 
         if(entity is None):
             abort(400, "This entity does not exist")
 
         #call algorithm on number of days till cron-job updates on Sunday
-        num_days = 7 - datetime.datetime.today().weekday()
+        if not g.entity.is_admin or params.num_days is None:
+            num_days = 7 - datetime.datetime.today().weekday()
+        else:
+            # only admins should be able to set the number of dates generated
+            num_days = params.num_days
+
+        generated_meal_plans = []
+
         try:
-            generate_meal_plan(entity_pk, num_days)
+            generated_meal_plans = generate_meal_plan(entity_pk, num_days)
         #return error for problem, otherwise return None
         except Exception as e:
+            # Don't want to show users backend error messages.
+            print("Failed to generate meal plan: " + str(e.message))
             abort(400, "Failed to generate meal plan")
-        return {"message": "generated meal plan."}
+
+        return generated_meal_plans
 
 class MealPlans(Resource):
     def __init__(self):
@@ -523,6 +547,10 @@ class EntityGroceryList(Resource):
 
         return grocery_list
 
+@app.route("/")
+@auth.login_required
+def static_index():
+    return send_from_directory("static", "index.html")
 
 my_api.add_resource(TagsList, '/api/v2.0/tag_types/<int:tag_type_pk>/tags', endpoint = 'tagslist')
 
@@ -542,6 +570,7 @@ my_api.add_resource(EntityRecipeRatings, '/api/v2.0/entities/<int:entity_pk>/rec
 my_api.add_resource(EntityGroceryList, '/api/v2.0/entities/<int:entity_pk>/grocery_list', endpoint = 'entitygrocerylist')
 
 my_api.add_resource(Tokens, '/api/v2.0/tokens', endpoint = 'tokens')
+
 
 @app.errorhandler(400)
 def bad_request(e):

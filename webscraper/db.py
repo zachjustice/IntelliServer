@@ -192,19 +192,35 @@ def insert_meal_plan(entity, recipes, day):
     (conn, cur) = connect()
     categories = ['breakfast', 'lunch', 'dinner']
     start_day = day
+    meal_plans = {}
+
     for i, category in enumerate(categories):
         meal_type = category
         day = start_day
+
         for r in recipes[i]:
-            insert_meal(entity, r[0], str(day), meal_type, cur)
+            meal_plan = insert_meal(entity, r[0], str(day), meal_type, cur)
+            meal_plans[category] = meal_plan
+
             day += datetime.timedelta(days=1)
+
     conn.commit()
     disconnect(conn, cur)
+    return meal_plans
 
 def insert_meal(entity, recipePk, day, meal_type, cur):
-    query = """INSERT INTO tb_meal_plan (entity, recipe, eat_on, meal_type) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING;"""
+    query = """INSERT INTO tb_meal_plan (entity, recipe, eat_on, meal_type) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING RETURNING entity, recipe, meal_plan;"""
     data = (entity, recipePk, day, meal_type);
     cur.execute(query, data)
+
+    meal_plan = cur.fetchone()
+    meal_plan_dict = {
+        'entity_pk': meal_plan[0],
+        'recipe_pk': meal_plan[1],
+        'meal_plan_pk': meal_plan[2]
+    }
+
+    return json.loads((json.dumps(meal_plan_dict, indent=2)))
 
 def get_ingredient_data():
     conn, cur = connect()

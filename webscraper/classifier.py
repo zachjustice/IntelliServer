@@ -39,8 +39,9 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
     #insert into db
     today = datetime.now()
     today -= timedelta(timeDelta) #testing parameter, defaults no affect
-    insert_meal_plan(entityPk, mealPlan, today)
-    return mealPlan
+    created_meal_plans = insert_meal_plan(entityPk, mealPlan, today)
+
+    return created_meal_plans
 
 #given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
 def generate_typed_meal_plan(userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 7):
