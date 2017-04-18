@@ -301,7 +301,7 @@ class Entities(Resource):
                 tag = None
                 if isinstance(dietary_concern, basestring):
                     dietary_concern = dietary_concern.lower().strip(' ')
-                    tag = session.query(Tag).filter_by(name = dietary_concern, tag_type_pk = 1).first()
+                    tag = session.query(Tag).filter_by(name = dietary_concern, tag_type_fk = 1).first()
                 elif isinstance(dietary_concern, int):
                     tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_fk = 1).first()
                 else:
