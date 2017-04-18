@@ -397,18 +397,18 @@ class EntityMealPlans(Resource):
             meal_plans_query = meal_plans_query.filter(MealPlan.eat_on == date)
 
         #get favorite recipes only
-        if params.is_favorite is not None and (params.is_favorite.lower == 'true'):
+        if params.is_favorite is not None and (params.is_favorite.lower() == 'true'):
            entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == 1).all()
            favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
            meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
 
         #filter based on meal type parameters
         meal_types = []
-        if params.is_breakfast is not None and (params.is_breakfast.lower == 'true'):
+        if params.is_breakfast is not None and (params.is_breakfast.lower() == 'true'):
             meal_types.append('breakfast')
-        if params.is_lunch is not None and (params.is_lunch.lower == 'true'):
+        if params.is_lunch is not None and (params.is_lunch.lower() == 'true'):
             meal_types.append('lunch')
-        if params.is_dinner is not None and (params.is_dinner.lower == 'true'):
+        if params.is_dinner is not None and (params.is_dinner.lower() == 'true'):
             meal_types.append('dinner')
 
         #final filtering of meals
