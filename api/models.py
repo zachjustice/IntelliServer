@@ -226,7 +226,6 @@ class EntityRecipeRating(Base):
     entity_fk = Column("entity", Integer, ForeignKey('tb_entity.entity'))
     recipe_fk = Column("recipe", Integer, ForeignKey('tb_recipe.recipe'))
     rating = Column(String)
-    is_favorite = Column(Boolean, default=False)
     is_calibration_recipe = Column(Boolean, default=False)
     notes = Column(String)
 
@@ -239,13 +238,12 @@ class EntityRecipeRating(Base):
             'entity_fk' : self.entity_fk,
             'recipe_fk' : self.recipe_fk,
             'rating' : self.rating,
-            'is_favorite' : self.is_favorite,
             'is_calibration_recipe' : self.is_calibration_recipe,
             'notes' : self.notes
         }
 
     def __repr__(self):
-        return "<EntityRecipeRating(entity_recipe_rating ='%s' entity='%s', recipe='%s', rating='%s', is_favorite='%s', is_calibration_recipe='%s', notes='%s')>" % ( self.entity_recipe_rating_pk, self.entity_fk, self.recipe_fk, self.rating, self.is_favorite, self.is_calibration_recipe, self.notes)
+        return "<EntityRecipeRating(entity_recipe_rating ='%s' entity='%s', recipe='%s', rating='%s', is_calibration_recipe='%s', notes='%s')>" % ( self.entity_recipe_rating_pk, self.entity_fk, self.recipe_fk, self.rating, self.is_calibration_recipe, self.notes)
 
 class MealPlan(Base):
     __tablename__ = 'tb_meal_plan'
