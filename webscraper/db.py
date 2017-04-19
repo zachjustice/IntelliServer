@@ -199,8 +199,11 @@ def insert_meal_plan(entity, recipes, day):
         day = start_day
 
         for r in recipes[i]:
+            if category not in meal_plans:
+                meal_plans[category] = []
+
             meal_plan = insert_meal(entity, r[0], str(day), meal_type, cur)
-            meal_plans[category] = meal_plan
+            meal_plans[category].append(meal_plan)
 
             day += datetime.timedelta(days=1)
 
