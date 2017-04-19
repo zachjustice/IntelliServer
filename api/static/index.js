@@ -31,7 +31,8 @@ function display_meal_plans(meal_plans) {
 
     for(var meal_type of meal_types)
     {
-        var meal = meal_plans[meal_type];
+        // take the first meal since we requested one day of meal plans
+        var meal = meal_plans[meal_type][0]
         display_recipe(meal, meal_type);
     }
 

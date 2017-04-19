@@ -463,12 +463,13 @@ class EntityMealPlans(Resource):
             abort(400, "Failed to generate meal plan")
 
         if params.include_recipes:
-            for meal in generated_meal_plans:
-                print "inc recipe, meal: " + str(generated_meal_plans[meal])
-                recipe_pk = generated_meal_plans[meal]['recipe_pk']
-                recipe = session.query(Recipe).filter_by(recipe_pk=recipe_pk).first()
+            for meal_type in generated_meal_plans:
+                print "inc recipe, meal: " + str(generated_meal_plans[meal_type])
+                for i in range(len(generated_meal_plans[meal_type])):
+                    recipe_pk = generated_meal_plans[meal_type][i]['recipe_pk']
+                    recipe = session.query(Recipe).filter_by(recipe_pk=recipe_pk).first()
 
-                generated_meal_plans[meal].update(recipe.as_dict())
+                    generated_meal_plans[meal_type][i].update(recipe.as_dict())
 
         return generated_meal_plans
 
