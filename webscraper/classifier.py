@@ -131,36 +131,3 @@ def vectorize(ingredients):
             wordList += w
     return wordList
 
-
-###################################################
-#stuff to do tfidf manually - doesn't work as well as the library function, but might want to come back to it
-#def createDict():
-#    ingredients = get_ingredient_data()
-#    ingredientNames = [ingred['name'] for ingred in ingredients]
-#    ingredDictionary = defaultdict(int)
-#    for name in ingredientNames:
-#        for word in name.split():
-#            ingredDictionary[word] += 1
-#    return ingredDictionary
-#
-#
-#def vectorizeManual(ingredients, dic, numRecipes):
-#    wordList = ''
-#    for ingred in ingredients:
-#        wordList += ' '
-#        for w in ingred:
-#            wordList += w
-#    wordList = tb(wordList)
-#    tfidfDic = {}
-#    for word in wordList.words:
-#        tfScore = tf(word, wordList)
-#        idfScore = idf(word, dic, numRecipes)
-#        tfidfScore = tfScore * idfScore
-#        tfidfDic[word] = tfidfScore
-#    sorted_words = sorted(tfidfDic.items(), key=operator.itemgetter(1))
-#
-#def tf(word, blob):
-#    return blob.words.count(word) / len(blob.words)
-#
-#def idf(word, dic, numRecipes):
-#    return math.log(numRecipes / (1 + dic[word]))

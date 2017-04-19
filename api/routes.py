@@ -2,7 +2,7 @@
 # -*- coding: latin-1 -*-
 
 from flask import Flask, jsonify, abort, make_response, request, g, send_from_directory
-from flask_restful import Resource, Api, reqparse
+from flask_restful import Resource, Api, reqparse, inputs
 from flask_httpauth import HTTPBasicAuth
 from webscraper.classifier import generate_meal_plan
 from api.models import *
@@ -301,7 +301,7 @@ class Entities(Resource):
                 tag = None
                 if isinstance(dietary_concern, basestring):
                     dietary_concern = dietary_concern.lower().strip(' ')
-                    tag = session.query(Tag).filter_by(name = dietary_concern, tag_type_pk = 1).first()
+                    tag = session.query(Tag).filter_by(name = dietary_concern, tag_type_fk = 1).first()
                 elif isinstance(dietary_concern, int):
                     tag = session.query(Tag).filter_by(tag_pk = dietary_concern, tag_type_fk = 1).first()
                 else:
@@ -398,18 +398,18 @@ class EntityMealPlans(Resource):
             meal_plans_query = meal_plans_query.filter(MealPlan.eat_on == date)
 
         #get favorite recipes only
-        if params.is_favorite is not None:
+        if params.is_favorite is not None and (params.is_favorite.lower() == 'true'):
            entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == 1).all()
            favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
            meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
 
         #filter based on meal type parameters
         meal_types = []
-        if params.is_breakfast is not None:
+        if params.is_breakfast is not None and (params.is_breakfast.lower() == 'true'):
             meal_types.append('breakfast')
-        if params.is_lunch is not None:
+        if params.is_lunch is not None and (params.is_lunch.lower() == 'true'):
             meal_types.append('lunch')
-        if params.is_dinner is not None:
+        if params.is_dinner is not None and (params.is_dinner.lower() == 'true'):
             meal_types.append('dinner')
 
         #final filtering of meals
@@ -558,6 +558,7 @@ class EntityGroceryList(Resource):
         return grocery_list
 
 @app.route("/")
+@auth.login_required
 def static_index():
     return send_from_directory("static", "index.html")
 
