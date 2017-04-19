@@ -3,6 +3,8 @@
 var entity_pk = 8;
 var ratings = [];
 var rated_positive = 0;
+var cumulative_ratings = []
+var running_ratings = []
 
 $(init);
 
@@ -11,8 +13,10 @@ function init() {
 }
 
 function get_meal_plans(entity_pk) {
+    console.log("GET MEAL PLAN");
+    show_loading_screen();
     $.ajax({
-        url: "api/v2.0/entities/" + entity_pk + "/meal_plans?num_days=1",
+        url: "api/v2.0/entities/" + entity_pk + "/meal_plans?num_days=1&include_recipes=true",
         method: "POST",
         password: "super123",
         username: "test"
@@ -28,20 +32,20 @@ function display_meal_plans(meal_plans) {
     for(var meal_type of meal_types)
     {
         var meal = meal_plans[meal_type];
-        get_recipe(meal['recipe_pk'], meal_type)
+        display_recipe(meal, meal_type);
     }
+
+    hide_loading_screen();
 }
 
-function get_recipe(recipe_pk, meal_type) {
-    $.ajax({
-        url: "api/v2.0/recipes/" + recipe_pk,
-        method: "GET",
-        password: "super123",
-        username: "test"
-    })
-    .done( function (response) {
-        display_recipe(response, meal_type);
-    });
+function show_loading_screen() {
+    $('#loading_container').show();
+    $('#meal_plan_container').hide();
+}
+
+function hide_loading_screen() {
+    $('#loading_container').hide();
+    $('#meal_plan_container').show();
 }
 
 function display_recipe(recipe, meal_type) {
@@ -92,6 +96,9 @@ function display_recipe(recipe, meal_type) {
         $('#cumulative_rating').text(percentage_correct);
         $('#running_rating').text(percentage_last_six);
 
+        cumulative_ratings.push(percentage_correct);
+        running_ratings.push(percentage_last_six);
+
         if(ratings.length > 0 && ratings.length % 3 == 0)
         {
             get_meal_plans(entity_pk);
@@ -113,6 +120,7 @@ function rate_recipe(recipe_pk, rating) {
         data: {"rating": rating, "recipe_pk": recipe_pk}
     })
     .done( function (response) {
+        console.log("Received recipe rating response");
         console.log(response);
     });
 }

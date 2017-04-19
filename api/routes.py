@@ -363,6 +363,7 @@ class EntityMealPlans(Resource):
         self.reqparse.add_argument('date', required = False, type=str, location='args')
         self.reqparse.add_argument('recipe_pk', required = False, type=str, location='args')
         self.reqparse.add_argument('num_days', required = False, type=int, location='args')
+        self.reqparse.add_argument('include_recipes', required = False, type=str, location='args') # adds dictionary from recipe to each meal in the output
 
         self.reqparse.add_argument('start_date', required = False, type=str, location='args')
         self.reqparse.add_argument('end_date', required = False, type=str, location='args')
@@ -460,6 +461,14 @@ class EntityMealPlans(Resource):
             # Don't want to show users backend error messages.
             print("Failed to generate meal plan: " + str(e.message))
             abort(400, "Failed to generate meal plan")
+
+        if params.include_recipes:
+            for meal in generated_meal_plans:
+                print "inc recipe, meal: " + str(generated_meal_plans[meal])
+                recipe_pk = generated_meal_plans[meal]['recipe_pk']
+                recipe = session.query(Recipe).filter_by(recipe_pk=recipe_pk).first()
+
+                generated_meal_plans[meal].update(recipe.as_dict())
 
         return generated_meal_plans
 
