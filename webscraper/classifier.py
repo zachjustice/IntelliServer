@@ -11,8 +11,10 @@ from db import *
 from datetime import datetime, timedelta
 from collections import defaultdict
 from sklearn.feature_extraction.text import TfidfVectorizer
+from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict
+from numpy.random import choice
 from scipy import sparse
 
 #highest level method for generating a mealplan - generates a mealplan for numDays days including breakfast, lunch, and dinner
@@ -26,15 +28,15 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
     duplicates = []
     #breakfast
     breakfastPks = userRecipes[0]
-    mealPlan.append(generate_typed_meal_plan(breakfastPks, 'breakfast', numDays, duplicates))
+    mealPlan.append(generate_typed_meal_plan(entityPk, breakfastPks, 'breakfast', numDays, duplicates))
 
     #lunch
     lunchPks = userRecipes[1]
-    mealPlan.append(generate_typed_meal_plan(lunchPks, 'lunch', numDays, duplicates))
+    mealPlan.append(generate_typed_meal_plan(entityPk, lunchPks, 'lunch', numDays, duplicates))
 
     #dinner
     dinnerPks = userRecipes[2]
-    mealPlan.append(generate_typed_meal_plan(dinnerPks, 'dinner', numDays, duplicates))
+    mealPlan.append(generate_typed_meal_plan(entityPk, dinnerPks, 'dinner', numDays, duplicates))
 
     #insert into db
     today = datetime.now()
@@ -44,56 +46,89 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
     return created_meal_plans
 
 #given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
-def generate_typed_meal_plan(userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 7):
+def generate_typed_meal_plan(entityPk, userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 7):
     recipes = get_recipe_tag_data(mealType)
-    store = [r['recipe'] for r in recipes]
     if len(userRecipes) == 0:
         userRecipes.append(random.choice(recipes)['recipe'])
-    tfidfMatrix = setup_tfidf_matrix(recipes)
+
+    tfidfMatrix = setup_tfidf_matrix(recipes, mealType, needs_update = False)
     matchingList = []
     for calibrationPk in userRecipes:
         matchingList.append(find_similar_recipes(recipes, int(calibrationPk), calibrationThreshold, tfidfMatrix))
-    return merge_lists(matchingList, userRecipes, mealPlanSize, duplicates)
+
+    likedList = []
+    likedRecipes = get_user_likes(entityPk, mealType)
+    for like in likedRecipes:
+        likedList.append(find_similar_recipes(recipes, int(like['recipe']), calibrationThreshold, tfidfMatrix))
+
+
+    dislikedList = []
+    dislikedRecipes = get_user_dislikes(entityPk, mealType)
+    for dislike in dislikedList:
+        dislikedList.append(find_similar_recipes(recipes, int(dislike['recipe']), calibrationThreshold, tfidfMatrix))
+
+    return merge_lists(matchingList, userRecipes, mealPlanSize, duplicates, likedList, dislikedList)
 
 #merges recommendations from each base calibration recipe, uses a combination of two approaches
 #1. If different calibration recipes produce the same match, it is more likely to appear in the output recommendation
-#2. If each calibration recipe produces a distinct result, the most certain matches will appear in the output recommendation
-def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates):
+#2. If each calibration recipe produces a distinct result, the most certain matches are more likely to appear in the output recommendation
+def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList, dislikedList):
     matchCount = defaultdict(int)
     aggregateMatches = []
+
+    #populate blacklist based off of dislikes
+    blacklist = []
+    for dislike in dislikedList:
+        for dislikedRecommendation in like:
+            recipeName = recipe[1]
+            recipePk = int(recipe[2])
+            key = (recipePk, recipeName)
+            blacklist.append(key)
+
+    #populate recommendations based on calibration recipes
     for match in matchingLists:
         for recipe in match:
             recipeName = recipe[1]
             recipePk = int(recipe[2])
             key = (recipePk, recipeName)
-            if key not in duplicates:
-                if recipePk not in userRecipes:
-                    matchCount[key] += 1
-                    aggregateMatches.append(recipe)
+            if key not in duplicates and key not in blacklist:
+                matchCount[key] += 1
+                aggregateMatches.append(recipe)
+
+    #populate recommendations based on likes
+    for like in likedList:
+        for likedRecommendation in like:
+            recipeName = recipe[1]
+            recipePk = int(recipe[2])
+            key = (recipePk, recipeName)
+            if key not in duplicates and key not in blacklist:
+                matchCount[key] += 1
+                aggregateMatches.append(likedRecommendation)
+
 
     recommendations = []
     sortedFreqMatches = np.array(sorted(matchCount.items(), key=operator.itemgetter(1)))[::-1]
     aggregateMatches = np.array(aggregateMatches)
-    sortedConfMatches = aggregateMatches[aggregateMatches[:,0].argsort()][::-1]
-    sortedConfMatches = [(int(match[2]), match[1]) for match in sortedConfMatches]
+    tot = sum([float(c[0]) for c in aggregateMatches])
+    normalizedConfWeights = [float(match[0]) / tot for match in aggregateMatches]
+    aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
-    freqIndex = 0
-    confIndex = 0
-    while len(recommendations) < mealPlanSize:
-        freqMatch = sortedFreqMatches[freqIndex]
-        confMatch = sortedConfMatches[confIndex]
+    #frequency matches first
+    for freqMatch in sortedFreqMatches:
         if freqMatch[1] > 1:
             recommendations.append(freqMatch[0])
             duplicates.append(freqMatch[0])
-            freqIndex += 1
-        elif confMatch not in recommendations:
-            recommendations.append(confMatch)
-            duplicates.append(confMatch)
-            confIndex += 1
         else:
-            confIndex += 1
+            break
 
-    return recommendations
+    #sample from normalized confidence matches distribution
+    confIndices = choice(len(aggregateMatches), mealPlanSize, p=normalizedConfWeights, replace=False)
+    confMatches = [aggregateMatches[i] for i in confIndices]
+
+    #make sure it wasn't a freq match
+    recommendations.extend(match for match in confMatches if match not in recommendations)
+
+    return recommendations[0:mealPlanSize]
 
 #given a single recipePk, generates 'calibrationThreshold' more recipes given a tfidfMatrix
 def find_similar_recipes(recipes, calibrationPk, calibrationThreshold, tfidfMatrix):
@@ -108,19 +143,28 @@ def find_similar_recipes(recipes, calibrationPk, calibrationThreshold, tfidfMatr
     results = np.array(results).T
 
     sortedResults = results[results[:,0].argsort()[::-1]][1::]
-    return (sortedResults[0:calibrationThreshold])
+    return sortedResults[0:calibrationThreshold]
 
 
 #computes a tfidf matrix based on recipe vocabulary
-def setup_tfidf_matrix(recipes):
-    documents = []
-    for r in recipes:
-        documents.append(vectorize(r['ingredient_names']))
+def setup_tfidf_matrix(recipes, mealType, needs_update):
+    #recompute matrix because db changed
+    if needs_update:
+        documents = []
+        for r in recipes:
+            documents.append(vectorize(r['ingredient_names']))
 
-    tfidfVectorizer = TfidfVectorizer()
-    tfidfMatrix = tfidfVectorizer.fit_transform(documents)
-    tfidfMatrix = tfidfMatrix.tocsr()
-    return tfidfMatrix
+        tfidfVectorizer = TfidfVectorizer()
+        tfidfMatrix = tfidfVectorizer.fit_transform(documents)
+        tfidfMatrix = tfidfMatrix.tocsr()
+        np.savez('tfidf_' + str(mealType) + '.npz',data = tfidfMatrix.data ,indices=tfidfMatrix.indices,
+                             indptr =tfidfMatrix.indptr, shape=tfidfMatrix.shape )
+        return tfidfMatrix
+    else:
+        loader = np.load('tfidf_' + str(mealType) + '.npz')
+        return csr_matrix((loader['data'], loader['indices'], loader['indptr']),
+                            shape = loader['shape'])
+
 
 #translates ingredient list into a vocabulary
 def vectorize(ingredients):

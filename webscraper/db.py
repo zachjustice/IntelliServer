@@ -7,15 +7,6 @@ from psycopg2.extras import RealDictCursor
 
 def connect():
     try:
-        #TODO store password file somewhere else
-#        if os.path.isfile('.password'):
-#            f = open('.password', 'r')
-#            login = f.read().splitlines()
-#        else:
-#            print("Make sure you have a .password file with the correct authentication!")
-#            sys.exit(0)
-#
-#        conn=psycopg2.connect("dbname='intellichef' user='%s' password='%s'" % (login[0], login[1]))
         conn=psycopg2.connect("dbname='intellichef' user='postgres' password='tB9gh2RS' host='35.185.59.20'")
         cur = conn.cursor()
     except Exception as e :
@@ -243,10 +234,52 @@ def get_recipe_tag_data(tag):
     disconnect(conn, cur)
     return json.loads((json.dumps(recipes, indent=2)))
 
-#TODO
-def get_user_ratings(entity):
+def get_user_likes(entityPk, tag):
     (conn, cur) = connect()
-    query = """SELECT """
-    data = (entity, recipePk, day, meal_type);
-    cur.execute(query, data)
-    disconnect(conn, cur)
+    query = """
+    SELECT
+        r.recipe,
+        r.name
+    FROM tb_recipe r
+    JOIN tb_entity_recipe_rating rr
+    ON r.recipe = rr.recipe
+    JOIN tb_ingredient_recipe ir
+    ON ir.recipe = r.recipe
+    JOIN tb_ingredient i
+    ON i.ingredient = ir.ingredient
+    JOIN tb_recipe_tag rt
+    ON r.recipe = rt.recipe
+    JOIN tb_tag t
+    ON rt.tag = t.tag
+    WHERE rr.entity = %s AND t.name = %s AND rr.rating = 1
+    GROUP BY r.recipe, r.name
+    """
+    cur = execute(conn, query, (entityPk, tag))
+    recipes = cur.fetchall()
+    cur.close()
+    return recipes
+
+def get_user_dislikes(entityPk, tag):
+    (conn, cur) = connect()
+    query = """
+    SELECT
+        r.recipe,
+        r.name
+    FROM tb_recipe r
+    JOIN tb_entity_recipe_rating rr
+    ON r.recipe = rr.recipe
+    JOIN tb_ingredient_recipe ir
+    ON ir.recipe = r.recipe
+    JOIN tb_ingredient i
+    ON i.ingredient = ir.ingredient
+    JOIN tb_recipe_tag rt
+    ON r.recipe = rt.recipe
+    JOIN tb_tag t
+    ON rt.tag = t.tag
+    WHERE rr.entity = %s AND t.name = %s AND rr.rating = 1
+    GROUP BY r.recipe, r.name
+    """
+    cur = execute(conn, query, (entityPk, tag))
+    recipes = cur.fetchall()
+    cur.close()
+    return recipes
