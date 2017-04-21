@@ -115,7 +115,7 @@ class EntityRecipeRatings(Resource):
     @validate_access
     def post(self, entity_pk, recipe_pk):
         params = self.reqparse.parse_args()
-        print(params)
+
         existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
         if existing_entity_rating is not None: # enty exists
             if( params.rating is not None ):
@@ -399,9 +399,9 @@ class EntityMealPlans(Resource):
 
         #get favorite recipes only
         if params.is_favorite is not None and (params.is_favorite.lower() == 'true'):
-           entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == 1).all()
-           favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
-           meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
+            entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == 1).all()
+            favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
+            meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
 
         #filter based on meal type parameters
         meal_types = []
