@@ -464,7 +464,6 @@ class EntityMealPlans(Resource):
 
         if params.include_recipes:
             for meal_type in generated_meal_plans:
-                print "inc recipe, meal: " + str(generated_meal_plans[meal_type])
                 for i in range(len(generated_meal_plans[meal_type])):
                     recipe_pk = generated_meal_plans[meal_type][i]['recipe_pk']
                     recipe = session.query(Recipe).filter_by(recipe_pk=recipe_pk).first()
