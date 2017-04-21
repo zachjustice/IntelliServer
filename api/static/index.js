@@ -42,8 +42,8 @@ function display_meal_plans(meal_plans) {
 function show_loading_screen() {
     $('#loading_container').css('visibility', 'show');
     $('#meal_plan_container').css('visibility', 'hidden');
-//    $('#rating').css('visibility', 'hidden');
-//    $('#graph').css('visibility', 'hidden');
+    $('#rating').css('visibility', 'hidden');
+    $('#graph').css('visibility', 'hidden');
 }
 
 function hide_loading_screen() {
