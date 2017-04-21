@@ -44,7 +44,7 @@ function display_meal_plans(meal_plans) {
 }
 
 function show_loading_screen() {
-    $('#loading_container').css('visibility', 'show');
+    $('#loading_container').css('visibility', 'visible');
     $('#meal_plan_container').css('visibility', 'hidden');
     $('#rating').css('visibility', 'hidden');
     $('#graph').css('visibility', 'hidden');
@@ -52,9 +52,9 @@ function show_loading_screen() {
 
 function hide_loading_screen() {
     $('#loading_container').css('visibility', 'hidden');
-    $('#meal_plan_container').css('visibility', 'show');
-    $('#rating').css('visibility', 'show');
-    $('#graph').css('visibility', 'show');
+    $('#meal_plan_container').css('visibility', 'visible');
+    $('#rating').css('visibility', 'visible');
+    $('#graph').css('visibility', 'visible');
 }
 
 function display_recipe(recipe, meal_type) {
