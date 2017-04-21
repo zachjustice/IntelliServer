@@ -121,8 +121,6 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
     #frequency matches first
-    print(sortedFreqMatches)
-    return
     for freqMatch in sortedFreqMatches:
         if freqMatch[1] > 1:
             recommendations.append(freqMatch[0])
