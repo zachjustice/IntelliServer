@@ -38,6 +38,7 @@ function display_meal_plans(meal_plans) {
         console.log(meal);
         i++;
         display_recipe(meal, meal_type);
+        $('.' + meal_type + '_button').css('background-color', '#f15c48');
     }
 
     hide_loading_screen();
@@ -45,7 +46,7 @@ function display_meal_plans(meal_plans) {
 
 function show_loading_screen() {
     $('#loading_container').css('visibility', 'visible');
-    $('#meal_plan_container').css('visibility', 'hidden');
+//    $('#meal_plan_container').css('visibility', 'hidden');
     $('#rating').css('visibility', 'hidden');
     $('#graph').css('visibility', 'hidden');
 }
@@ -73,7 +74,7 @@ function display_recipe(recipe, meal_type) {
     $('.' + meal_type + '_button').unbind('click');
     $('.' + meal_type + '_button').click( function() {
         $('.' + meal_type + '_button').prop('disabled', true);
-        $('.' + meal_type + '_button').css('background-color', '#ddd')
+        $('.' + meal_type + '_button').css('background-color', '#ddd');
 
         var recipe_pk = $(this).data("recipe_pk");
         var rating    = $(this).data("rating");
