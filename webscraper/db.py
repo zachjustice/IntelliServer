@@ -190,11 +190,8 @@ def insert_meal_plan(entity, recipes, day):
         day = start_day
 
         for r in recipes[i]:
-            if category not in meal_plans:
-                meal_plans[category] = []
-
             meal_plan = insert_meal(entity, r[0], str(day), meal_type, cur)
-            meal_plans[category].append(meal_plan)
+            meal_plans[category] = meal_plan
 
             day += datetime.timedelta(days=1)
 
@@ -279,7 +276,7 @@ def get_user_dislikes(entityPk, tag):
     ON r.recipe = rt.recipe
     JOIN tb_tag t
     ON rt.tag = t.tag
-    WHERE rr.entity = %s AND t.name = %s AND rr.rating = 1
+    WHERE rr.entity = %s AND t.name = %s AND rr.rating = 0
     GROUP BY r.recipe, r.name
     """
     cur = execute(conn, query, (entityPk, tag))

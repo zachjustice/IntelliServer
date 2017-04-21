@@ -64,8 +64,11 @@ def generate_typed_meal_plan(entityPk, userRecipes, mealType, mealPlanSize = 7, 
 
     dislikedList = []
     dislikedRecipes = get_user_dislikes(entityPk, mealType)
-    for dislike in dislikedList:
-        dislikedList.append(find_similar_recipes(recipes, int(dislike['recipe']), calibrationThreshold, tfidfMatrix))
+    for dislike in dislikedRecipes:
+        sim_dislikes = find_similar_recipes(recipes, int(dislike['recipe']), calibrationThreshold, tfidfMatrix)
+        this_recipe = np.array(['1.0', dislike['name'], str(dislike['recipe'])])
+        sim_dislikes = np.concatenate((sim_dislikes, [this_recipe]))
+        dislikedList.append(sim_dislikes)
 
     return merge_lists(matchingList, userRecipes, mealPlanSize, duplicates, likedList, dislikedList)
 
