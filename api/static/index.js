@@ -16,7 +16,7 @@ function get_meal_plans(entity_pk) {
     console.log("GET MEAL PLAN");
     show_loading_screen();
     $.ajax({
-        url: "api/v2.0/entities/" + entity_pk + "/meal_plans?num_days=1&include_recipes=true",
+        url: "api/v2.0/entities/" + entity_pk + "/meal_plans?num_days=3&include_recipes=true",
         method: "POST",
         password: "super123",
         username: "test"
@@ -28,11 +28,15 @@ function display_meal_plans(meal_plans) {
     console.log("Meal Plans");
     console.log(meal_plans);
     var meal_types = ['breakfast', 'lunch', 'dinner'];
+    var i = 0;
 
     for(var meal_type of meal_types)
     {
         // take the first meal since we requested one day of meal plans
-        var meal = meal_plans[meal_type][0]
+        var meal = meal_plans['lunch'][i];
+        console.log('meal');
+        console.log(meal);
+        i++;
         display_recipe(meal, meal_type);
     }
 
@@ -40,13 +44,17 @@ function display_meal_plans(meal_plans) {
 }
 
 function show_loading_screen() {
-    $('#loading_container').show();
-    $('#meal_plan_container').hide();
+    $('#loading_container').css('visibility', 'visible');
+    $('#meal_plan_container').css('visibility', 'hidden');
+    $('#rating').css('visibility', 'hidden');
+    $('#graph').css('visibility', 'hidden');
 }
 
 function hide_loading_screen() {
-    $('#loading_container').hide();
-    $('#meal_plan_container').show();
+    $('#loading_container').css('visibility', 'hidden');
+    $('#meal_plan_container').css('visibility', 'visible');
+    $('#rating').css('visibility', 'visible');
+    $('#graph').css('visibility', 'visible');
 }
 
 function display_recipe(recipe, meal_type) {
@@ -103,6 +111,7 @@ function display_recipe(recipe, meal_type) {
         if(ratings.length > 0 && ratings.length % 3 == 0)
         {
             get_meal_plans(entity_pk);
+            graph(cumulative_ratings);
         }
     });
 }

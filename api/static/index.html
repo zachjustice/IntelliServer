@@ -1,54 +1,10 @@
 <html>
 <head>
     <title>IntelliChef Test Suite</title>
+    <link rel="stylesheet" type="text/css" href="styleSheet.css">
 
     <style type="text/css">
-        #content {
-            width: 100%;
-            height: 100%;
-        }
-
-        img {
-            width: 100%;
-            height: 100%;
-        }
-
-        .meal {
-            display: inline-block;
-            width: 30%;
-            height: 213px;
-            margin: 1.55%;
-        }
-
-        .recipe_name {
-            text-align: center;
-        }
-
-        #loading_container {
-            width: 100%;
-            height: 200px;
-        }
-
-        #loading_container img {
-            display: block;
-            height: 200px;
-            width: 200px;
-            margin: auto;
-        }
-
-	path {
-	    stroke: steelblue;
-	    stroke-width: 2;
-	    fill: none;
-	}
-
-	.axis path,
-	.axis line {
-	    fill: none;
-	    stroke: grey;
-	    stroke-width: 1;
-	    shape-rendering: crispEdges;
-	}
+        
     </style>
 </head>
 <body>
@@ -56,13 +12,9 @@
     enabled. Please enable
     Javascript and reload this page!&lt;/h2&gt;
     </noscript>
-
+    <div id="background"></div>
+    <h1> IntelliChef Test Suite</h1>
     <div id="content">
-        <div id="rating">
-            <p>Total Percent Rated Positive: <span id="cumulative_rating">N/A</span></p>
-            <p>Percent of Last 6 Meals Rated Positive: <span id="running_rating">N/A</span></p>
-        </div>
-
         <div id="loading_container">
             <img src="http://blog.teamtreehouse.com/wp-content/uploads/2015/05/InternetSlowdown_Day.gif" />
         </div>
@@ -89,7 +41,12 @@
                 <button class="dinner_button rate_down" id="dinner_rate_down">I Don't Like It!</button>
             </div>
         </div>
-
+        
+        <div id="rating">
+            <p>Total Percent Rated Positive: <span id="cumulative_rating">N/A</span></p>
+            <p>Percent of Last 6 Meals Rated Positive: <span id="running_rating">N/A</span></p>
+        </div>
+        
         <div id="graph" class="aGraph" style="float:left;"></div>
     </div>
 

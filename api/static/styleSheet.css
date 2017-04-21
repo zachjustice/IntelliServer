@@ -1,0 +1,102 @@
+#content {
+    width: 100%;
+    height: 100%;
+    margin-top: 70px;
+}
+
+img {
+    width: 100%;
+    height: 100%;
+}
+
+.meal {
+    display: inline-block;
+    width: 30%;
+    height: 213px;
+    margin: 1.55%;
+    color: #545454;
+/*    transition: all 0.5s ease;*/
+}
+
+.recipe_name {
+    text-align: center;
+}
+
+#loading_container {
+    width: 100%;
+    height: 200px;
+    z-index: 10000;
+    position: absolute;
+    margin-top: 25px;
+}
+
+#loading_container img {
+    display: block;
+    height: 200px;
+    width: 200px;
+    margin: auto;
+}
+
+path {
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+#background {   
+    background: #f15c48;
+    width: 1300px;
+    margin-left: -8px;
+    margin-top: -8px;
+    height: 150px;
+}
+h1 {
+    color: white;
+    height: 200px;
+    z-index: 10000;
+    margin-top: -100px;
+    position: absolute;
+}
+
+#rating {
+    margin-top: 45px;
+    text-align: center;
+}
+#rating p {
+    color: #545454;
+    margin-right: 20px;
+}
+
+button {
+    
+    background-color: #f15c48;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+#breakfast_rate_up {
+    margin-left: 35px;
+}
+
+#lunch_rate_up {
+    margin-left: 35px;
+}
+
+#dinner_rate_up {
+    margin-left: 35px;
+}
