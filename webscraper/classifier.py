@@ -121,12 +121,12 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
     #frequency matches first
-    for freqMatch in sortedFreqMatches:
-        if freqMatch[1] > 1:
-            recommendations.append(freqMatch[0])
-            duplicates.append(freqMatch[0])
-        else:
-            break
+    #for freqMatch in sortedFreqMatches:
+    #    if freqMatch[1] > 1:
+    #        recommendations.append(freqMatch[0])
+    #        duplicates.append(freqMatch[0])
+    #    else:
+    #        break
 
     #sample from normalized confidence matches distribution
     #confIndices = choice(len(aggregateMatches), mealPlanSize, p=normalizedConfWeights, replace=False)
