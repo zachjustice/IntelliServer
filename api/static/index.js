@@ -40,13 +40,17 @@ function display_meal_plans(meal_plans) {
 }
 
 function show_loading_screen() {
-    $('#loading_container').show();
-    $('#meal_plan_container').hide();
+    $('#loading_container').css('visibility', 'show');
+    $('#meal_plan_container').css('visibility', 'hidden');
+//    $('#rating').css('visibility', 'hidden');
+//    $('#graph').css('visibility', 'hidden');
 }
 
 function hide_loading_screen() {
-    $('#loading_container').hide();
-    $('#meal_plan_container').show();
+    $('#loading_container').css('visibility', 'hidden');
+    $('#meal_plan_container').css('visibility', 'show');
+    $('#rating').css('visibility', 'show');
+    $('#graph').css('visibility', 'show');
 }
 
 function display_recipe(recipe, meal_type) {
@@ -103,6 +107,7 @@ function display_recipe(recipe, meal_type) {
         if(ratings.length > 0 && ratings.length % 3 == 0)
         {
             get_meal_plans(entity_pk);
+            graph(cumulative_ratings);
         }
     });
 }
