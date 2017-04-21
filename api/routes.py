@@ -96,7 +96,7 @@ class RecipesList(Resource):
 class EntityRecipeRatings(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('rating', required=False, type=int, location='json')
+        self.reqparse.add_argument('rating', required=False, type=int, location=['json','args'])
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
 
@@ -115,7 +115,7 @@ class EntityRecipeRatings(Resource):
     @validate_access
     def post(self, entity_pk, recipe_pk):
         params = self.reqparse.parse_args()
-
+        print(params)
         existing_entity_rating = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.recipe_fk == recipe_pk).first()
         if existing_entity_rating is not None: # enty exists
             if( params.rating is not None ):

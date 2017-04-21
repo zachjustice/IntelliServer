@@ -65,7 +65,7 @@ function display_recipe(recipe, meal_type) {
     $('#' + meal_type + '_name').text(recipe['name']);
 
     $('#' + meal_type +   '_rate_up').data("rating", 1);
-    $('#' + meal_type + '_rate_down').data("rating", -1);
+    $('#' + meal_type + '_rate_down').data("rating", 0);
 
     $('#' + meal_type +   '_rate_up').data("recipe_pk", recipe['recipe_pk']);
     $('#' + meal_type + '_rate_down').data("recipe_pk", recipe['recipe_pk']);
@@ -119,17 +119,11 @@ function display_recipe(recipe, meal_type) {
 }
 
 function rate_recipe(recipe_pk, rating) {
-    if(!recipe_pk || !rating) {
-        console.log("Invalid argument. recipe_pk: " + recipe_pk + ", rating: " + rating);
-        return;
-    }
-
     $.ajax({
-        url: "api/v2.0/entities/" + entity_pk + "/recipes/" + recipe_pk,
+        url: "api/v2.0/entities/" + entity_pk + "/recipes/" + recipe_pk + "?rating=" + rating,
         method: "POST",
         password: "super123",
         username: "test",
-        data: {"rating": rating, "recipe_pk": recipe_pk}
     })
     .done( function (response) {
         console.log("Received recipe rating response");
