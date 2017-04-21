@@ -5,7 +5,7 @@ from api.models import my_map
 
 print("MEAL PLAN UPDATE - " + str(time.strftime("%m/%d/%Y")))
 entities = my_map(lambda r: r['entity'], get_entity_pks())
-entities = [22]
+entities = [8]
 
 for entity in entities:
     generate_meal_plan(entity, 7, timeDelta = 0)

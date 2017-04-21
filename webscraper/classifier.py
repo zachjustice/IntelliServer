@@ -112,8 +112,12 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     recommendations = []
     sortedFreqMatches = np.array(sorted(matchCount.items(), key=operator.itemgetter(1)))[::-1]
     aggregateMatches = np.array(aggregateMatches)
-    tot = sum([float(c[0]) for c in aggregateMatches])
-    normalizedConfWeights = [float(match[0]) / tot for match in aggregateMatches]
+    confWeights = [float((match[0]))  for match in aggregateMatches]
+    noise = np.random.normal(-0.1,0.1,len(confWeights))
+    confWeights = [x + y for x, y in zip(confWeights, noise)]
+    tot = sum([w for w in confWeights])
+    normalizedConfWeights = [w / tot for w in confWeights]
+
     aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
     #frequency matches first
@@ -129,7 +133,9 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     confMatches = [aggregateMatches[i] for i in confIndices]
 
     #make sure it wasn't a freq match
-    recommendations.extend(match for match in confMatches if match not in recommendations)
+    for match in confMatches:
+        if match not in recommendations:
+            recommendations.append(match)
 
     return recommendations[0:mealPlanSize]
 
