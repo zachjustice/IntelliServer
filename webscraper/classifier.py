@@ -49,11 +49,7 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
 def generate_typed_meal_plan(entityPk, userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 20):
     recipes = get_recipe_tag_data(mealType)
     if len(userRecipes) == 0:
-        meal_plan = []
-        for i in range(mealPlanSize):
-            r = random.choice(recipes)
-            meal_plan.append((r['recipe'], r['name']))
-        return meal_plan
+        userRecipes.append(random.choice(recipes)['recipe'])
 
     tfidfMatrix = setup_tfidf_matrix(recipes, mealType, needs_update = False)
     matchingList = []
@@ -99,7 +95,6 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
             recipePk = int(recipe[2])
             key = (recipePk, recipeName)
             if key not in duplicates and key not in blacklist:
-                matchCount[key] += 1
                 aggregateMatches.append(recipe)
 
     #populate recommendations based on likes
@@ -109,34 +104,24 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
             recipePk = int(likedRecommendation[2])
             key = (recipePk, recipeName)
             if key not in duplicates and key not in blacklist:
-                matchCount[key] += 1
                 aggregateMatches.append(likedRecommendation)
 
 
     recommendations = []
-    sortedFreqMatches = np.array(sorted(matchCount.items(), key=operator.itemgetter(1)))[::-1]
     aggregateMatches = np.array(aggregateMatches)
     confWeights = [float((match[0]))  for match in aggregateMatches]
-    #noise = np.random.normal(-0.1,0.0,len(confWeights))
-    #confWeights = [x + y for x, y in zip(confWeights, noise)]
+    noise = np.random.normal(-0.1,0.0,len(confWeights))
+    confWeights = [x + y for x, y in zip(confWeights, noise)]
     tot = sum([w for w in confWeights])
     normalizedConfWeights = [abs(w) / tot for w in confWeights]
 
     aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
-    #frequency matches first
-    #for freqMatch in sortedFreqMatches:
-    #    if freqMatch[1] > 1:
-    #        recommendations.append(freqMatch[0])
-    #        duplicates.append(freqMatch[0])
-    #    else:
-    #        break
-
     #sample from normalized confidence matches distribution
     confIndices = choice(len(aggregateMatches), mealPlanSize, p=normalizedConfWeights, replace=False)
     confMatches = [aggregateMatches[i] for i in confIndices]
 
-    #make sure it wasn't a freq match
+    #make sure it isn't a duplicate
     for match in confMatches:
         if match not in recommendations:
             recommendations.append(match)
