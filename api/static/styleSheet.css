@@ -34,13 +34,13 @@ img {
     height: 200px;
     z-index: 10000;
     position: absolute;
-    margin-top: 25px;
+    margin-top: 50px;
 }
 
 #loading_container img {
     display: block;
-    height: 200px;
-    width: 200px;
+    height: 150px;
+    width: 150px;
     margin: auto;
 }
 
@@ -107,4 +107,8 @@ button {
 
 #dinner_rate_up {
     margin-left: 35px;
+}
+
+#graph {
+    margin-left: 15%;
 }
