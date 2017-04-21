@@ -129,8 +129,8 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     #        break
 
     #sample from normalized confidence matches distribution
-    #confIndices = choice(len(aggregateMatches), mealPlanSize, p=normalizedConfWeights, replace=False)
-    confIndices = choice(len(aggregateMatches), mealPlanSize, replace=False)
+    confIndices = choice(len(aggregateMatches), mealPlanSize, p=normalizedConfWeights, replace=False)
+    #confIndices = choice(len(aggregateMatches), mealPlanSize, replace=False)
     confMatches = [aggregateMatches[i] for i in confIndices]
 
     #make sure it wasn't a freq match
