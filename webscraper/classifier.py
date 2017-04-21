@@ -46,7 +46,7 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
     return created_meal_plans
 
 #given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
-def generate_typed_meal_plan(entityPk, userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 7):
+def generate_typed_meal_plan(entityPk, userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 20):
     recipes = get_recipe_tag_data(mealType)
     if len(userRecipes) == 0:
         userRecipes.append(random.choice(recipes)['recipe'])
@@ -121,6 +121,8 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
     #frequency matches first
+    print(sortedFreqMatches)
+    return
     for freqMatch in sortedFreqMatches:
         if freqMatch[1] > 1:
             recommendations.append(freqMatch[0])
