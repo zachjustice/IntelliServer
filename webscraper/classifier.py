@@ -113,7 +113,7 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     sortedFreqMatches = np.array(sorted(matchCount.items(), key=operator.itemgetter(1)))[::-1]
     aggregateMatches = np.array(aggregateMatches)
     confWeights = [float((match[0]))  for match in aggregateMatches]
-    noise = np.random.normal(-0.1,0.1,len(confWeights))
+    noise = np.random.normal(-0.5,0.1,len(confWeights))
     confWeights = [x + y for x, y in zip(confWeights, noise)]
     tot = sum([w for w in confWeights])
     normalizedConfWeights = [w / tot for w in confWeights]
