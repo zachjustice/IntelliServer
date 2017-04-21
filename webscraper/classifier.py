@@ -49,7 +49,9 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
 def generate_typed_meal_plan(entityPk, userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 20):
     recipes = get_recipe_tag_data(mealType)
     if len(userRecipes) == 0:
-        userRecipes.append(random.choice(recipes)['recipe'])
+        meal_plan = random.choice(recipes, 3)
+        meal_plan = [(r['name'], r['recipe'])]
+        return meal_plan
 
     tfidfMatrix = setup_tfidf_matrix(recipes, mealType, needs_update = False)
     matchingList = []
