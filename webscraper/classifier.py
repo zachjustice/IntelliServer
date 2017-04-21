@@ -82,7 +82,7 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     #populate blacklist based off of dislikes
     blacklist = []
     for dislike in dislikedList:
-        for dislikedRecommendation in like:
+        for dislikedRecommendation in dislike:
             recipeName = recipe[1]
             recipePk = int(recipe[2])
             key = (recipePk, recipeName)
