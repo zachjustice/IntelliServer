@@ -110,19 +110,22 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     recommendations = []
     aggregateMatches = np.array(aggregateMatches)
     confWeights = [float((match[0]))  for match in aggregateMatches]
-    #noise = np.random.normal(-0.1,0.0,len(confWeights))
-    #confWeights = [x + y for x, y in zip(confWeights, noise)]
+    noise = np.random.normal(-0.1,0.0,len(confWeights))
+    confWeights = [x + y for x, y in zip(confWeights, noise)]
     tot = sum([w for w in confWeights])
     normalizedConfWeights = [abs(w) / tot for w in confWeights]
 
     aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b237a009b5df53bd7c7b9eef30cec39f61133221
     #sample from normalized confidence matches distribution
     confIndices = choice(len(aggregateMatches), mealPlanSize, p=normalizedConfWeights, replace=False)
     confMatches = [aggregateMatches[i] for i in confIndices]
 
-    #make sure it wasn't a freq match
+    #make sure it isn't a duplicate
     for match in confMatches:
         if match not in recommendations:
             recommendations.append(match)
