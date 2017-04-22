@@ -95,7 +95,6 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
             recipePk = int(recipe[2])
             key = (recipePk, recipeName)
             if key not in duplicates and key not in blacklist:
-                matchCount[key] += 1
                 aggregateMatches.append(recipe)
 
     #populate recommendations based on likes
@@ -105,12 +104,10 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
             recipePk = int(likedRecommendation[2])
             key = (recipePk, recipeName)
             if key not in duplicates and key not in blacklist:
-                matchCount[key] += 1
                 aggregateMatches.append(likedRecommendation)
 
 
     recommendations = []
-    sortedFreqMatches = np.array(sorted(matchCount.items(), key=operator.itemgetter(1)))[::-1]
     aggregateMatches = np.array(aggregateMatches)
     confWeights = [float((match[0]))  for match in aggregateMatches]
     #noise = np.random.normal(-0.1,0.0,len(confWeights))
@@ -120,13 +117,6 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
 
     aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
-    #frequency matches first
-    #for freqMatch in sortedFreqMatches:
-    #    if freqMatch[1] > 1:
-    #        recommendations.append(freqMatch[0])
-    #        duplicates.append(freqMatch[0])
-    #    else:
-    #        break
 
     #sample from normalized confidence matches distribution
     confIndices = choice(len(aggregateMatches), mealPlanSize, p=normalizedConfWeights, replace=False)
