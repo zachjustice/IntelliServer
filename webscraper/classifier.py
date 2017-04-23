@@ -46,7 +46,7 @@ def generate_meal_plan(entityPk, numDays, userRecipes = None, timeDelta = 0):
     return created_meal_plans
 
 #given a list of recipePks as 'userRecipes', generates a meal plan of 'mealPlanSize' recipes, considering 'calibrationThreshold' recipes from each calibration recipe
-def generate_typed_meal_plan(entityPk, userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 7):
+def generate_typed_meal_plan(entityPk, userRecipes, mealType, mealPlanSize = 7, duplicates = [], calibrationThreshold = 20):
     recipes = get_recipe_tag_data(mealType)
     if len(userRecipes) == 0:
         userRecipes.append(random.choice(recipes)['recipe'])
@@ -82,9 +82,9 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
     #populate blacklist based off of dislikes
     blacklist = []
     for dislike in dislikedList:
-        for dislikedRecommendation in like:
-            recipeName = recipe[1]
-            recipePk = int(recipe[2])
+        for dislikedRecommendation in dislike:
+            recipeName = dislikedRecommendation[1]
+            recipePk = int(dislikedRecommendation[2])
             key = (recipePk, recipeName)
             blacklist.append(key)
 
@@ -95,41 +95,37 @@ def merge_lists(matchingLists, userRecipes, mealPlanSize, duplicates, likedList,
             recipePk = int(recipe[2])
             key = (recipePk, recipeName)
             if key not in duplicates and key not in blacklist:
-                matchCount[key] += 1
                 aggregateMatches.append(recipe)
 
     #populate recommendations based on likes
     for like in likedList:
         for likedRecommendation in like:
-            recipeName = recipe[1]
-            recipePk = int(recipe[2])
+            recipeName = likedRecommendation [1]
+            recipePk = int(likedRecommendation[2])
             key = (recipePk, recipeName)
             if key not in duplicates and key not in blacklist:
-                matchCount[key] += 1
                 aggregateMatches.append(likedRecommendation)
 
 
     recommendations = []
-    sortedFreqMatches = np.array(sorted(matchCount.items(), key=operator.itemgetter(1)))[::-1]
     aggregateMatches = np.array(aggregateMatches)
-    tot = sum([float(c[0]) for c in aggregateMatches])
-    normalizedConfWeights = [float(match[0]) / tot for match in aggregateMatches]
-    aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
+    confWeights = [float((match[0]))  for match in aggregateMatches]
+    #noise = np.random.normal(-0.1,0.0,len(confWeights))
 
-    #frequency matches first
-    for freqMatch in sortedFreqMatches:
-        if freqMatch[1] > 1:
-            recommendations.append(freqMatch[0])
-            duplicates.append(freqMatch[0])
-        else:
-            break
+    #confWeights = [x + y for x, y in zip(confWeights, noise)]
+    tot = sum([w for w in confWeights])
+    normalizedConfWeights = [abs(w) / tot for w in confWeights]
+
+    aggregateMatches = [(match[2], match[1]) for match in aggregateMatches]
 
     #sample from normalized confidence matches distribution
     confIndices = choice(len(aggregateMatches), mealPlanSize, p=normalizedConfWeights, replace=False)
     confMatches = [aggregateMatches[i] for i in confIndices]
 
-    #make sure it wasn't a freq match
-    recommendations.extend(match for match in confMatches if match not in recommendations)
+    #make sure it isn't a duplicate
+    for match in confMatches:
+        if match not in recommendations:
+            recommendations.append(match)
 
     return recommendations[0:mealPlanSize]
 

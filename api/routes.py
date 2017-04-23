@@ -96,7 +96,7 @@ class RecipesList(Resource):
 class EntityRecipeRatings(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('rating', required=False, type=int, location='json')
+        self.reqparse.add_argument('rating', required=False, type=int, location=['json','args'])
         self.reqparse.add_argument('is_calibration_recipe', required=False, type=bool, location='json')
         self.reqparse.add_argument('notes', required=False, type=str, location='json')
 
@@ -399,9 +399,9 @@ class EntityMealPlans(Resource):
 
         #get favorite recipes only
         if params.is_favorite is not None and (params.is_favorite.lower() == 'true'):
-           entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == 1).all()
-           favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
-           meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
+            entity_recipe_ratings = session.query(EntityRecipeRating).filter(EntityRecipeRating.entity_fk == entity_pk, EntityRecipeRating.rating == 1).all()
+            favorite_recipe_fks = my_map(lambda r: r.recipe_fk, entity_recipe_ratings)
+            meal_plans_query = meal_plans_query.filter(MealPlan.recipe_fk.in_(favorite_recipe_fks))
 
         #filter based on meal type parameters
         meal_types = []
