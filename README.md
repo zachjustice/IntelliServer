@@ -7,13 +7,24 @@ $ pip install virtualenv
 ```
 
 ## Setup
-create virtual environment (specify path if default interpreter is python3):
+Download the repository either manually or with git.
+
+Configure IntelliServer's database connection by creating a .db_config file in the api folder with the following contents:
+```
+[database_user]
+[database_password]
+[host]
+[database_name]
+```
+IntelliServer is configured for use with PostgreSQL 
+
+Create a virtual environment (specify the path if the default interpreter is python3):
 ```
 $ cd [IntelliServer/]
 $ virtualenv [-p path/to/python2.7] venv  
 ```
 
-t0 activate virtual environment:
+To activate the virtual environment:
 
     windows:
 ```
@@ -25,22 +36,22 @@ $ venv\Scripts\activate
 $ source venv/bin/activate   
 ```
 
-(to deactivate virtual environment):
+To deactivate the virtual environment:
 ```
 $ deactivate   
 ```
 
-install python dependencies using requirements.txt:
-    make sure virtual environment is activated
+Install python dependencies using requirements.txt:
+    make sure the virtual environment is activated
     ```
     $ venv/bin/pip install -r requirements.txt  
     ```
 
 
 ## Usage
-  To run IntelliServer on localhost from port 5000:
-    make sure virtual environment is activated 
-    navigate to django_site/ folder  
+  To run IntelliServer from your localhost on port 5000:
+    make sure the virtual environment is activated 
+    navigate to your IntelliServer/ folder  
     ```
     $ python runserver.py  
     ```
