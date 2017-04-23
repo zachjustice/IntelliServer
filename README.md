@@ -16,7 +16,7 @@ Configure IntelliServer's database connection by creating a .db_config file in t
 [host]
 [database_name]
 ```
-IntelliServer is configured for use with PostgreSQL 
+IntelliServer is configured for use with PostgreSQL.
 
 Create a virtual environment (specify the path if the default interpreter is python3):
 ```
@@ -61,3 +61,4 @@ Install python dependencies using requirements.txt:
     Use four spaces for python
 
 ## Problems
+* entity/meal_plans POST route allows users to generate multiple meals for a single day. (e.g. two breakfasts for the same date.) Only one breakfast will be displayed in the android application.
