@@ -18,7 +18,9 @@ Configure IntelliServer's database connection by creating a .db_config file in t
 [host]
 [database_name]
 ```
-IntelliServer is configured for use with PostgreSQL.
+IntelliServer is configured for use with PostgreSQL, but can be configured for other database solutions by changing api/models.py
+
+Next, create the .secret_key file in the api folder for secure hashing of passwords and tokens. The content should be a random string.
 
 Create a virtual environment (specify the path if the default interpreter is python3):
 ```
