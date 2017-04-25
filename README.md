@@ -1,6 +1,8 @@
 ## Installation
 Install python 2.7
+
 Install pip
+
 Install virtualenv:
 ```
 $ pip install virtualenv
